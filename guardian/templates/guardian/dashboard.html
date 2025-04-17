@@ -9,6 +9,7 @@
         th, td { padding: 10px; border-bottom: 1px solid #ccc; }
         th { background-color: #f0f0f0; }
         .timestamp { font-size: 0.9em; color: #666; }
+        .status-disabled { color: red; }
     </style>
 </head>
 <body>
@@ -29,9 +30,10 @@
                 <tr>
                     <td>{{ device.token|slice:":12" }}...</td>
                     <td>
-                        {% with device.control as ctrl %}
-                            {{ "ENABLED" if ctrl and ctrl.enabled else "DISABLED" }}
-                        {% endwith %}
+                        {% if ctrl and ctrl.enabled %}
+                            <span class="status-enabled">ENABLED</span>
+                            <span class="status-disabled">DISABLED</span>
+                        {% endif %}
                     </td>
                     <td>
                         <label><input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}> Enable Override</label>
