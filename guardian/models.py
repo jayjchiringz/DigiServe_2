@@ -16,7 +16,7 @@ class GuardianDevice(models.Model):
         return f"{self.user.username if self.user else 'Unlinked'} - {self.token[:10]}..."
 
 class GuardianLog(models.Model):
-    device = models.ForeignKey(GuardianDevice, on_delete=models.CASCADE, related_name='logs')
+    device = models.ForeignKey(GuardianDevice, on_delete=models.CASCADE, related_name='logs', null=True, blank=True)
     log_text = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
