@@ -8,7 +8,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import GuardianLogSerializer
 
-
 def control_json(request):
     try:
         control = GuardianControl.objects.first()
@@ -53,5 +52,24 @@ def get_device_logs(request):
     return Response(serializer.data)
 
 def log_dashboard(request):
+    control, _ = GuardianControl.objects.get_or_create(id=1)
+
+    if request.method == 'POST':
+        toggle = request.POST.get('toggle')
+        new_state = True if toggle == 'on' else False
+
+        if control.enabled != new_state:
+            # Log only if there was a change
+            control.enabled = new_state
+            control.save()
+
+            GuardianLog.objects.create(
+                device=None,  # No device linked to web admin
+                log_text=f"🛰️ Guardian remote state set to {'ENABLED' if new_state else 'DISABLED'} via dashboard"
+            )
+
     logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
-    return render(request, 'guardian/dashboard.html', {'logs': logs})
+    return render(request, 'guardian/dashboard.html', {
+        'logs': logs,
+        'control': control,
+    })

@@ -12,6 +12,12 @@
     </style>
 </head>
 <body>
+    <form method="post">
+        {% csrf_token %}
+        <label><input type="radio" name="toggle" value="on" {% if control.enabled %}checked{% endif %}> ON</label>
+        <label><input type="radio" name="toggle" value="off" {% if not control.enabled %}checked{% endif %}> OFF</label>
+        <button type="submit">Apply</button>
+    </form>    
     <h2>📡 Guardian Activity Logs</h2>
     <table>
         <thead>
