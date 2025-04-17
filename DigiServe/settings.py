@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-4^t+$^ud9(d3m65i+gg#3br_)72-c3)e7gr4(*z)^$z=*n_@h_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['technothrone.pythonanywhere.com']
+ALLOWED_HOSTS = ['DigiServe25.pythonanywhere.com']
 
 CORS_ALLOW_ALL_ORIGINS = True  # Only for testing, not recommended for production
 
@@ -28,7 +28,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'https://127.0.0.1:8000',
-    'https://technothrone.pythonanywhere.com',
+    'https://DigiServe25.pythonanywhere.com',
 ]
 
 # Set up logging for CSRF failures

@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import JsonResponse, HttpResponse
 from .models import GuardianControl, GuardianLog
+from django.views.decorators.csrf import csrf_exempt
 
 def control_json(request):
     try:
@@ -13,6 +14,7 @@ def control_json(request):
     except Exception as e:
         return JsonResponse({'status': 'on'})  # fail-safe default
 
+@csrf_exempt
 def upload_log(request):
     if request.method == 'POST':
         content = request.body.decode('utf-8')
