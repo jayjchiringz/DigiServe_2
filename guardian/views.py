@@ -51,3 +51,7 @@ def get_device_logs(request):
     logs = device.logs.order_by('-timestamp')[:50]  # latest 50 logs
     serializer = GuardianLogSerializer(logs, many=True)
     return Response(serializer.data)
+
+def log_dashboard(request):
+    logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
+    return render(request, 'guardian/dashboard.html', {'logs': logs})
