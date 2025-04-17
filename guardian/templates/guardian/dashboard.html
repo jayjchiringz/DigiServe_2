@@ -18,7 +18,9 @@
             <thead>
                 <tr>
                     <th>Device</th>
-                    <th>Toggle</th>
+                    <th>Status</th>
+                    <th>Manual Override</th>
+                    <th>Force State</th>
                     <th>Apply</th>
                 </tr>
             </thead>
@@ -28,17 +30,25 @@
                     <td>{{ device.token|slice:":12" }}...</td>
                     <td>
                         {% with device.control as ctrl %}
-                            <label><input type="radio" name="toggle" value="on" {% if ctrl and ctrl.enabled %}checked{% endif %}> ON</label>
-                            <label><input type="radio" name="toggle" value="off" {% if ctrl and not ctrl.enabled %}checked{% endif %}> OFF</label>
+                            {{ "ENABLED" if ctrl and ctrl.enabled else "DISABLED" }}
                         {% endwith %}
-                        <input type="hidden" name="device_token" value="{{ device.token }}">
                     </td>
-                    <td><button type="submit">Apply</button></td>
+                    <td>
+                        <label><input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}> Enable Override</label>
+                    </td>
+                    <td>
+                        <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label>
+                        <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
+                    </td>
+                    <td>
+                        <input type="hidden" name="device_token" value="{{ device.token }}">
+                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
-    </form>        
+    </form>    
     <h2>📡 Guardian Activity Logs</h2>
     <table>
         <thead>

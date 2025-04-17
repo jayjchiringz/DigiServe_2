@@ -12,6 +12,8 @@ class GuardianDevice(models.Model):
     token = models.CharField(max_length=255, unique=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     last_seen = models.DateTimeField(auto_now=True)
+    override_enabled = models.BooleanField(default=False)  # ← Add this
+    override_value = models.BooleanField(default=True)     # ← Store ON/OFF
 
     def __str__(self):
         return f"{self.user.username if self.user else 'Unlinked'} - {self.token[:10]}..."

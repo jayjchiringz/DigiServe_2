@@ -56,41 +56,43 @@ def log_dashboard(request):
     devices = GuardianDevice.objects.all()
 
     if request.method == 'POST':
-        token = request.POST.get('device_token')
-        toggle = request.POST.get('toggle')
+        submitted_token = request.POST.get("submit_token")
 
-        if token and toggle:
+        if submitted_token:
             try:
-                device = GuardianDevice.objects.get(token=token)
-                control, _ = GuardianControl.objects.get_or_create(device=device)
+                device = GuardianDevice.objects.get(token=submitted_token)
 
-                new_state = (toggle == 'on')
-                if control.enabled != new_state:
-                    control.enabled = new_state
-                    control.save()
+                override_enabled = f"override_{device.token}" in request.POST
+                forced_state = request.POST.get(f"force_{device.token}") == "on"
 
-                    GuardianLog.objects.create(
-                        device=device,
-                        log_text=f"🛰️ Guardian remote state set to {'ENABLED' if new_state else 'DISABLED'} via dashboard"
-                    )
+                device.override_enabled = override_enabled
+                device.override_value = forced_state
+                device.save()
+
+                GuardianLog.objects.create(
+                    device=device,
+                    log_text=f"🛰️ Remote override {'ENABLED' if override_enabled else 'DISABLED'} — State: {'ON' if forced_state else 'OFF'}"
+                )
 
             except GuardianDevice.DoesNotExist:
                 GuardianLog.objects.create(
                     device=None,
-                    log_text=f"⚠️ Toggle failed — device not found: {token}"
+                    log_text=f"⚠️ Override failed — device not found: {submitted_token}"
                 )
 
-        return redirect('guardian-log-dashboard')  # ensure clean reload after POST
+        return redirect('guardian-log-dashboard')
 
     return render(request, 'guardian/dashboard.html', {
         'logs': logs,
         'devices': devices,
     })
 
+# views.py
 def device_control_json(request, token):
     device = get_object_or_404(GuardianDevice, token=token)
-    try:
-        control = device.control
-        return JsonResponse({'status': 'on' if control.enabled else 'off'})
-    except:
-        return JsonResponse({'status': 'on'})  # Default fail-safe
+    
+    if device.override_enabled:
+        return JsonResponse({'status': 'override', 'value': 'on' if device.override_value else 'off'})
+
+    control = GuardianControl.objects.filter(device=device).first()
+    return JsonResponse({'status': 'on' if (control and control.enabled) else 'off'})
