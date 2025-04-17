@@ -1,6 +1,6 @@
 from .models import GuardianControl, GuardianLog, GuardianDevice
 
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
@@ -52,24 +52,34 @@ def get_device_logs(request):
     return Response(serializer.data)
 
 def log_dashboard(request):
-    control, _ = GuardianControl.objects.get_or_create(id=1)
+    devices = GuardianDevice.objects.all()
+    logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
 
     if request.method == 'POST':
+        token = request.POST.get('device_token')
         toggle = request.POST.get('toggle')
-        new_state = True if toggle == 'on' else False
 
+        device = get_object_or_404(GuardianDevice, token=token)
+        control, _ = GuardianControl.objects.get_or_create(device=device)
+
+        new_state = toggle == 'on'
         if control.enabled != new_state:
-            # Log only if there was a change
             control.enabled = new_state
             control.save()
-
             GuardianLog.objects.create(
-                device=None,  # No device linked to web admin
+                device=device,
                 log_text=f"🛰️ Guardian remote state set to {'ENABLED' if new_state else 'DISABLED'} via dashboard"
             )
 
-    logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
     return render(request, 'guardian/dashboard.html', {
+        'devices': devices,
         'logs': logs,
-        'control': control,
     })
+
+def device_control_json(request, token):
+    device = get_object_or_404(GuardianDevice, token=token)
+    try:
+        control = device.control
+        return JsonResponse({'status': 'on' if control.enabled else 'off'})
+    except:
+        return JsonResponse({'status': 'on'})  # Default fail-safe

@@ -14,10 +14,31 @@
 <body>
     <form method="post">
         {% csrf_token %}
-        <label><input type="radio" name="toggle" value="on" {% if control.enabled %}checked{% endif %}> ON</label>
-        <label><input type="radio" name="toggle" value="off" {% if not control.enabled %}checked{% endif %}> OFF</label>
-        <button type="submit">Apply</button>
-    </form>    
+        <table>
+            <thead>
+                <tr>
+                    <th>Device</th>
+                    <th>Toggle</th>
+                    <th>Apply</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for device in devices %}
+                <tr>
+                    <td>{{ device.token|slice:":12" }}...</td>
+                    <td>
+                        {% with device.control as ctrl %}
+                            <label><input type="radio" name="toggle" value="on" {% if ctrl and ctrl.enabled %}checked{% endif %}> ON</label>
+                            <label><input type="radio" name="toggle" value="off" {% if ctrl and not ctrl.enabled %}checked{% endif %}> OFF</label>
+                        {% endwith %}
+                        <input type="hidden" name="device_token" value="{{ device.token }}">
+                    </td>
+                    <td><button type="submit">Apply</button></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>        
     <h2>📡 Guardian Activity Logs</h2>
     <table>
         <thead>

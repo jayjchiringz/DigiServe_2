@@ -5,5 +5,6 @@ urlpatterns = [
     path('control.json', views.control_json),
     path('upload-log', views.upload_log),
     path('device-logs', views.get_device_logs),
-    path('logs/', views.log_dashboard, name='guardian-log-dashboard')
+    path('logs/', views.log_dashboard, name='guardian-log-dashboard'),
+    path('control/<str:token>.json', views.device_control_json, name='device_control_json'),
 ]
