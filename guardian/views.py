@@ -1,6 +1,6 @@
 from .models import GuardianControl, GuardianLog, GuardianDevice
 
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
@@ -52,28 +52,39 @@ def get_device_logs(request):
     return Response(serializer.data)
 
 def log_dashboard(request):
-    devices = GuardianDevice.objects.all()
     logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
+    devices = GuardianDevice.objects.all()
 
     if request.method == 'POST':
         token = request.POST.get('device_token')
         toggle = request.POST.get('toggle')
 
-        device = get_object_or_404(GuardianDevice, token=token)
-        control, _ = GuardianControl.objects.get_or_create(device=device)
+        if token and toggle:
+            try:
+                device = GuardianDevice.objects.get(token=token)
+                control, _ = GuardianControl.objects.get_or_create(device=device)
 
-        new_state = toggle == 'on'
-        if control.enabled != new_state:
-            control.enabled = new_state
-            control.save()
-            GuardianLog.objects.create(
-                device=device,
-                log_text=f"🛰️ Guardian remote state set to {'ENABLED' if new_state else 'DISABLED'} via dashboard"
-            )
+                new_state = (toggle == 'on')
+                if control.enabled != new_state:
+                    control.enabled = new_state
+                    control.save()
+
+                    GuardianLog.objects.create(
+                        device=device,
+                        log_text=f"🛰️ Guardian remote state set to {'ENABLED' if new_state else 'DISABLED'} via dashboard"
+                    )
+
+            except GuardianDevice.DoesNotExist:
+                GuardianLog.objects.create(
+                    device=None,
+                    log_text=f"⚠️ Toggle failed — device not found: {token}"
+                )
+
+        return redirect('log_dashboard')  # ensure clean reload after POST
 
     return render(request, 'guardian/dashboard.html', {
-        'devices': devices,
         'logs': logs,
+        'devices': devices,
     })
 
 def device_control_json(request, token):
