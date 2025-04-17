@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %}{{ selected_business.name }} Financial Summary{% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<ul class="messages">
+			{% for message in messages %}
+				<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+		<form method="get" style="text-align: center; margin-bottom: 20px;">
+			<label for="period">Period:</label>
+			<select id="period" name="period">
+				<option value="today" {% if period == "today" %}selected{% endif %}>Today</option>
+				<option value="this_week" {% if period == "this_week" %}selected{% endif %}>This Week</option>
+				<option value="this_month" {% if period == "this_month" %}selected{% endif %}>This Month</option>
+				<option value="this_quarter" {% if period == "this_quarter" %}selected{% endif %}>This Quarter</option>
+				<option value="this_mid_year" {% if period == "this_mid_year" %}selected{% endif %}>This mid Year</option>
+				<option value="this_year" {% if period == "this_year" %}selected{% endif %}>This Year</option>
+				<option value="custom" {% if period == "custom" %}selected{% endif %}>Custom</option>
+			</select>
+
+			<div id="custom-dates" style="{% if period != 'custom' %}display: none;{% endif %}">
+				<label for="start_date">Start Date:</label>
+				<input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+				<label for="end_date">End Date:</label>
+				<input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+			</div>
+			<button type="submit">Filter</button>
+		</form>
+
+		<div class="financial-summary">
+			<h2 style="text-align: center;">
+				{% if period == 'today' %}
+					{{ period|title }}'s Summary ({{ start_date }})
+				{% else %}
+					{{ period|title }}'s Summary from {{ start_date }} to {{ end_date }}
+				{% endif %}
+			</h2>		
+			<p><strong>Total Net Sales:</strong>{{ total_revenue|currency }}</p>
+			<ul>
+				<li><strong>Mpesa Payments:</strong> {{ mpesa_revenue|currency }}<br>
+					<strong>Bank Payments:</strong> {{ bank_revenue|currency }}<br>
+					<strong>Cash Payments:</strong> {{ cash_revenue|currency }}
+				</li>
+			</ul>			
+			<ul>
+				<li><strong>Paid Bills:</strong> {{ paid_bills|currency }}<br>
+					<strong>Unpaid Bills:</strong> {{ unpaid_bills|currency }}
+				</li>
+			</ul>
+			<hr>
+			
+			<p><strong>Total Expenditure:</strong>{{ total_expenditure|currency }}</p>
+
+			<div class="expense-breakdown">
+				<p><strong>Breakdown by Expense Type</strong></p>
+				<table>
+					<thead>
+						<tr>
+							<th>Type</th>
+							<th>Total Amount</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for breakdown in expense_breakdown %}
+							<tr>
+								<td>{{ breakdown.expense_type_display }}</td>
+								<td>{{ breakdown.total|currency }}</td>
+							</tr>
+						{% empty %}
+							<tr>
+								<td colspan="2">No expenditures found for the selected date range.</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>	
+			<hr>
+			<p><strong>Total Cost of Goods Sold (COGS):</strong> Kshs {{ total_cogs|currency }}</p>
+			<p><strong>Income Before Expenses:</strong> Kshs {{ income_before_expenses|currency }}</p>
+			
+			<p><strong>Gross Profit:</strong>{{ gross_profit|currency }}</p>
+			
+			<hr>
+			<p><strong>Net Profit:</strong> <span style="font-weight: bold; text-decoration: underline;">{{ net_profit|currency }}</span></p>
+		</div>
+
+		<script>
+			document.getElementById('period').addEventListener('change', function() {
+				document.getElementById('custom-dates').style.display = this.value === 'custom' ? 'block' : 'none';
+			});
+		</script>
+{% endblock %}

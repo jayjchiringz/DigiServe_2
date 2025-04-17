@@ -1,0 +1,12 @@
+<!-- csrf_failure.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSRF Token Missing or Incorrect</title>
+</head>
+<body>
+    <h1>Access Denied: CSRF Verification Failed</h1>
+    <p>Sorry, there was a security issue (CSRF token missing or incorrect). Please try again.</p>
+    <p>{{ reason }}</p>
+</body>
+</html>

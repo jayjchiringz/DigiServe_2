@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock List</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="{% url 'dashboard' %}">Home</a></li>	
+			
+            <!-- Logout -->
+            <li>
+                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+                <a href="#" class="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <header class="header">
+        <h1>DigiServe Stock List</h1>
+    </header>
+    <div class="content">
+        <!-- Display success message -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}  
+
+		<div class="search-bar">
+			<form method="get" action="{% url 'stock-list' %}">
+				<input type="text" name="query" placeholder="Search stock items" value="{{ request.GET.query }}">
+				<button type="submit">Search</button>
+			</form>
+		</div>	
+		
+	{% if items %}
+        <ul>
+            {% for item in items %}
+                <li>
+                    {% load currency_filters %}
+                    <strong>{{ item.name }}</strong>, 
+                    {{ item.packages }} {{ item.package_type|lower }} packages
+                    ({{ item.stock }} units in total)
+                    <br>
+                    <strong>Unit Cost/Buying Price:</strong> {{ item.unit_cost|currency }}
+                    <br>
+                    <strong>Total Cost/Buying Price:</strong> {{ item.total_cost|currency }}
+                    <br>
+                    <strong>Unit Selling Price:</strong> {{ item.unit_selling_price|currency }}
+                    <br>
+                    <em>Last Updated: {{ item.last_updated_at|date:"Y-m-d H:i:s" }}</em>
+                    <br>
+                    
+                    <!-- Form to update Unit Selling Price -->
+                    <form method="post" action="{% url 'update-price' item.id %}">
+                        {% csrf_token %}
+                        <label for="price">Update Unit Selling Price:</label>
+                        <input type="text" name="price" id="price" value="{{ item.unit_selling_price }}">
+                        <button type="submit">Update</button>
+                    </form>
+                    
+                    <br>
+                    <strong>Total Expected Revenue:</strong> {{ item.total_expected_revenue|currency }}
+                    <br>
+                    <strong>Total Expected Profit Margin:</strong> {{ item.total_expected_profit_margin|currency }}
+                    <br>
+                    {% if item.last_updated_by %}
+                        <em>Price set by {{ item.last_updated_by.username }} on {{ item.last_updated_at|date:"Y-m-d H:i:s" }}</em>
+                    {% else %}
+                        <em>No recent price updates.</em>
+                    {% endif %}
+                    <hr>
+                </li>
+            {% endfor %}
+        </ul>
+	{% else %}
+        <p>No items in stock.</p>
+    {% endif %}
+        <hr>
+        <h2>Grand Totals</h2>
+        <p><strong>Grand Total Buying Price:</strong> {{ grand_total_cost|currency }}</p>
+        <p><strong>Grand Total Expected Revenue:</strong> {{ grand_total_expected_revenue|currency }}</p>
+        <p><strong>Grand Total Expected Profit Margin:</strong> {{ grand_total_expected_profit_margin|currency }}</p>
+
+        <a href="{% url 'add-stock' %}">Update Stock</a>
+    </div>
+</body>
+</html>

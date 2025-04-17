@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Table</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="{% url 'dashboard' %}">Home</a></li>
+            <li><a href="{% url 'manage-tables' %}">Manage Tables</a></li>
+            <li>
+                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+            </li>
+        </ul>
+    </nav>
+    <h1>Edit Table</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

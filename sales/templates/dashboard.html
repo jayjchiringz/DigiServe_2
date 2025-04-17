@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiServe Dashboard</title>
+    {% load static %}
+    <!--<link rel="icon" href="{% static 'images/favicon.ico' %}">-->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+	<link rel="manifest" href="{% static 'manifest.json' %}">
+	<script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		// Data passed from Django
+		const salesLabels = JSON.parse('{{ sales_labels|safe }}');
+		const salesData = JSON.parse('{{ sales_data|safe }}');
+		const stockLabels = JSON.parse('{{ stock_labels|safe }}');
+		const stockData = JSON.parse('{{ stock_data|safe }}');
+		const predictionsData = JSON.parse('{{ predictions_data|safe }}');
+
+		console.log("Sales Labels:", salesLabels);
+		console.log("Sales Data:", salesData);
+		console.log("Stock Labels:", stockLabels);
+		console.log("Stock Data:", stockData);
+		console.log("Predictions Data:", predictionsData);
+
+		// Define charts as global variables
+		let combinedSalesChart, stockChart;
+
+		window.onload = function() {
+			initializeCombinedSalesChart();
+			initializeStockChart();
+		};
+
+		// Combined Sales and Predictions Chart
+		function initializeCombinedSalesChart() {
+			const combinedSalesCtx = document.getElementById('combinedSalesChart').getContext('2d');
+			console.log("Initializing combinedSalesChart");
+			combinedSalesChart = new Chart(combinedSalesCtx, {
+				type: 'line',
+				data: {
+					labels: salesLabels,
+					datasets: [
+						{
+							label: 'Actual Sales',
+							data: salesData,
+							backgroundColor: 'rgba(54, 162, 235, 0.2)',
+							borderColor: 'rgba(54, 162, 235, 1)',
+							borderWidth: 2,
+							pointRadius: 4,
+							fill: true
+						},
+						{
+							label: 'Sales Baseline',
+							data: predictionsData,
+							backgroundColor: 'rgba(255, 159, 64, 0.2)',
+							borderColor: 'rgba(255, 159, 64, 1)',
+							borderWidth: 2,
+							pointRadius: 4,
+							fill: true
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: {
+							position: 'top',
+							labels: {
+								color: '#333',
+								font: {
+									size: 14,
+									weight: 'bold'
+								}
+							}
+						},
+						tooltip: { enabled: true }
+					},
+					scales: {
+						responsive: true,
+						x: {
+							title: { display: true, text: 'Date', color: '#666' },
+							ticks: { color: '#333' }
+						},
+						y: {
+							title: { display: true, text: 'Sales Amount', color: '#666' },
+							beginAtZero: true,
+							ticks: { color: '#333' }
+						}
+					}
+				}
+			});
+		}
+
+		// Stock Chart
+		function initializeStockChart() {
+			const stockCtx = document.getElementById('stockChart').getContext('2d');
+			console.log("Initializing stockChart");
+			stockChart = new Chart(stockCtx, {
+				type: 'bar',
+				data: {
+					labels: stockLabels,
+					datasets: [{
+						label: 'Stock Levels',
+						data: stockData,
+						backgroundColor: 'rgba(153, 102, 255, 0.2)',
+						borderColor: 'rgba(153, 102, 255, 1)',
+						borderWidth: 1,
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: { position: 'top' },
+						tooltip: { enabled: true }
+					},
+					indexAxis: 'y',
+					scales: {
+						x: {
+							beginAtZero: true,
+							ticks: { color: '#333' },
+							title: { display: true, text: 'Stock Quantity', color: '#666' }
+						},
+						y: {
+							ticks: { color: '#333' }
+						}
+					}
+				}
+			});
+		}
+
+		// Toggle navigation menu
+		function toggleNav() {
+			const nav = document.querySelector('.dashboard-nav');
+			const content = document.querySelector('.content');
+			const toggleBtn = document.querySelector('.toggle-btn');
+
+			// Toggle collapsed class on navigation and content
+			nav.classList.toggle('collapsed');
+			content.classList.toggle('collapsed');
+
+			// Adjust the toggle button's position dynamically
+			if (nav.classList.contains('collapsed')) {
+				toggleBtn.style.left = '20px'; // Align with the collapsed state
+			} else {
+				toggleBtn.style.left = '250px'; // Slightly outside the expanded menu
+			}
+		}
+
+		// Filter charts by date using AJAX
+		function filterCharts() {
+			const startDate = document.getElementById('start_date').value;
+			const endDate = document.getElementById('end_date').value;
+
+			if (startDate && endDate) {
+				fetch(`/sales/filter-data/?start_date=${startDate}&end_date=${endDate}`)
+					.then(response => response.json())
+					.then(data => {
+						console.log("Filtered Data Response:", data);
+
+						if (data.sales_labels && data.sales_data && data.predictions_data) {
+							console.log("Sales Labels:", data.sales_labels);
+							console.log("Sales Data:", data.sales_data);
+							console.log("Predictions Data:", data.predictions_data);
+
+							updateCombinedChart(data.sales_labels, data.sales_data, data.predictions_data);
+						} else {
+							console.warn("No data returned for the selected date range.");
+						}
+					})
+					.catch(error => {
+						console.error('Error fetching filtered data:', error);
+					});
+			} else {
+				alert("Please select a valid date range.");
+			}
+		}
+
+		// Update chart data with new filtered data
+		function updateCombinedChart(newSalesLabels, newSalesData, newPredictionsData) {
+			console.log("Updating combined chart with:");
+		    console.log("Updating chart with labels:", newSalesLabels);  // Log updated labels
+			console.log("Updating chart with sales data:", newSalesData);  // Log updated sales data
+			console.log("Updating chart with predictions data:", newPredictionsData);  // Log updated predictions data
+
+			// Reset labels and datasets
+			combinedSalesChart.data.labels.length = 0;
+			combinedSalesChart.data.datasets.forEach(dataset => dataset.data.length = 0);
+
+			// Update combined Sales and Predictions chart
+			combinedSalesChart.data.labels = newSalesLabels;
+			combinedSalesChart.data.datasets[0].data = newSalesData;
+			combinedSalesChart.data.datasets[1].data = newPredictionsData;
+			combinedSalesChart.update();
+		}
+
+		// Function to toggle submenu visibility
+		function toggleSubmenu(event) {
+			event.stopPropagation();
+			const submenu = event.target.nextElementSibling;
+			if (submenu && submenu.tagName === 'UL') {
+				// Hide other open submenus
+				document.querySelectorAll('.dashboard-nav ul ul').forEach(otherSubmenu => {
+					if (otherSubmenu !== submenu) {
+						otherSubmenu.style.display = 'none';
+					}
+				});
+				// Toggle the clicked submenu
+				submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+			}
+		}
+
+		// Attach click event listeners to parent menu items
+		document.addEventListener("DOMContentLoaded", () => {
+			// Attach click event listeners to menu links
+			document.querySelectorAll(".dashboard-nav ul li > a").forEach((link) => {
+				link.addEventListener("click", (event) => {
+
+					const parent = event.target.parentElement; // Parent <li> element
+					const submenu = parent.querySelector("ul"); // Direct child <ul> (submenu)
+
+					if (submenu) {
+						// Toggle the "open" class
+						const isOpen = parent.classList.toggle("open");
+
+						// Update accessibility attributes
+						event.target.setAttribute("aria-expanded", isOpen);
+						submenu.setAttribute("aria-hidden", !isOpen);
+
+						// Close other open submenus
+						closeOtherMenus(parent);
+					}
+				});
+			});
+
+			// Close all menus when clicking outside the navigation
+			document.addEventListener("click", (event) => {
+				if (!event.target.closest(".dashboard-nav")) {
+					closeAllMenus();
+				}
+			});
+		});
+
+		function closeOtherMenus(excludeParent) {
+			// Close all open menus except the one provided
+			document.querySelectorAll(".dashboard-nav ul li.open").forEach((openItem) => {
+				if (openItem !== excludeParent) {
+					openItem.classList.remove("open");
+					const link = openItem.querySelector("a");
+					const submenu = openItem.querySelector("ul");
+					if (link && submenu) {
+						link.setAttribute("aria-expanded", "false");
+						submenu.setAttribute("aria-hidden", "true");
+					}
+				}
+			});
+		}
+
+		function closeAllMenus() {
+			// Close all menus
+			document.querySelectorAll(".dashboard-nav ul li.open").forEach((openItem) => {
+				openItem.classList.remove("open");
+				const link = openItem.querySelector("a");
+				const submenu = openItem.querySelector("ul");
+				if (link && submenu) {
+					link.setAttribute("aria-expanded", "false");
+					submenu.setAttribute("aria-hidden", "true");
+				}
+			});
+		}
+
+	</script>
+
+    <style>
+		/* General Reset */
+		* {
+			margin: 0 !important;
+			padding: 0 !important;
+			box-sizing: border-box !important;
+		}
+
+		/* Dashboard Container */
+		.dashboard-container {
+			display: flex !important;
+			flex-direction: row !important;
+			min-height: 100vh !important;
+			width: 100% !important;
+			overflow: hidden !important; /* Prevent overflow */
+		}
+
+		/* Navigation Bar */
+		.nav-container {
+			position: relative; /* Ensures toggle button is relative to this container */
+			width: 250px; /* Matches the navigation width */
+			z-index: 2000; /* Ensure visibility above other elements */
+		}
+
+		.dashboard-nav {
+			position: fixed !important; /* Stay fixed on screen *//*done*/
+			top: 0 !important; /*done*/
+			left: 0 !important; /*done*/
+			width: 250px !important; /* Default expanded width *//*done*/
+			height: 100% !important; /* Full height *//*done*/
+			background-color: #607d8b !important; /* Navigation color *//*done*/
+			color: #fff !important; /* White text *//*done*/
+			z-index: 2000 !important; /* Above content *//*done*/
+			transform: translateX(-100%) !important; /* Initially hidden in mobile */
+			transition: transform 0.3s ease-in-out, width 0.3s ease-in-out !important; /* Smooth transitions *//*done*/
+			overflow-y: auto !important; /* Enable scrolling if items overflow *//*done*/
+			pointer-events: none; /* Disabled interactions by default */
+			padding: 20px 0 !important; /* Vertical padding */
+		}
+
+
+		/* Expanded Navigation (Desktop View) */
+		.dashboard-nav.expanded {
+			transform: translateX(0) !important; /* Fully visible in desktop */
+			pointer-events: auto !important; /* Enable interactions */
+		}
+
+		/* Collapsed Navigation (Visible in Mobile View) */
+		.dashboard-nav.collapsed {
+			transform: translateX(0) !important; /* Slide into view */
+			pointer-events: auto !important; /* Enable interactions */
+			/*transition: transform 0.3s ease-in-out, width 0.3s ease-in-out !important;*/
+			width: 250px !important; /* Keep full width */
+		}
+
+		/* Navigation Items */
+		.dashboard-nav ul {
+			list-style-type: none !important; /* Remove bullets */
+			padding: 0 !important;
+			margin: 0 !important;
+			display: flex !important;
+			flex-direction: column !important;
+		}
+
+		.dashboard-nav ul li {
+			position: relative; /* For submenu positioning */
+			padding: 10px 20px !important; /* Space between items */
+			border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; /* Separator line */
+		}
+
+		.dashboard-nav ul li a {
+			color: #fff !important; /* White text for links */
+			text-decoration: none !important;
+			display: block !important;
+		}
+
+		/* Submenu Links */
+		.dashboard-nav ul ul li > a {
+			padding: 5px 10px;
+			font-size: 0.9rem;
+			color: #fff;
+		}
+
+		.dashboard-nav ul ul {
+			display: none !important; /* Hidden by default */
+			position: relative !important;
+			left: 100%; /* Align to the right of parent */
+			top: 0 !important; /* Align with parent */
+			background-color: #546e7a !important; /* Slightly darker background */
+			padding: 10px !important;
+			margin-left: 10px !important;
+			border-radius: 4px !important;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important; /* Shadow for distinction */
+			z-index: 2010 !important; /* Above main menu */
+			transition: all 0.3s ease-in-out !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+		}
+
+		/* Show submenu when open */
+		.dashboard-nav ul li.open > ul {
+			display: block !important;
+		}
+
+		/* Links styling */
+		.dashboard-nav ul li > a {
+			display: block !important;
+			color: #fff !important;
+			text-decoration: none !important;
+			padding: 10px 20px !important;
+			cursor: pointer !important;
+		}
+
+		.dashboard-nav ul ul.open {
+			display: block !important; /* Show when toggled */
+		}
+
+		/* Toggle Button */
+		.toggle-btn {
+			position: absolute !important;
+			top: 20px !important; /* Position from the top of the viewport */
+			/*left: calc(250px - 20px) !important;  Dynamically adjust based on menu width */
+			left: 10px !important;
+			width: 40px !important; /* Set width */
+			height: 40px !important; /* Set height */
+			background-color: #607d8b !important; /* Original navigation color */
+			color: #fff !important; /* White icon color */
+			border: none !important; /* Remove border */
+			cursor: pointer !important; /* Pointer on hover */
+			border-radius: 50% !important; /* Round shape */
+			z-index: 3000 !important; /* Ensure it's above all elements, including navigation and content */
+			transition: left 0.3s ease !important; /* Smooth sliding transition */
+		}
+
+		/* Position Toggle Button Relative to Collapsed/Expanded State */
+		.dashboard-nav.expanded ~ .toggle-btn {
+			right: -40px !important; /* Place it outside the expanded menu */
+		}
+
+		.dashboard-nav.collapsed ~ .toggle-btn {
+			left: 250x !important; /* Keep it close to the left margin when collapsed */
+		}
+
+		.toggle-btn:hover {
+			background-color: #546e7a !important; /* Darker hover effect */
+		}
+
+		/* Content Area */
+		.content {
+			flex-grow: 1 !important; /* Occupy remaining space */
+			padding: 20px !important; /* Padding for content */
+			margin-left: 0 !important;
+			transition: margin-left 0.3s ease-in-out !important; /* Smooth adjustment */
+			background-color: #f4f4f4 !important; /* Match theme */
+			z-index: 1000 !important; /* Below navigation */
+		}
+
+		.dashboard-nav.collapsed ~ .content {
+			margin-left: 250px !important; /* Full-width content when navigation is hidden */
+		}
+
+		/* Charts Container */
+		.charts-container {
+			display: flex !important;
+			flex-direction: column !important;
+			flex-wrap: wrap !important;
+			gap: 20px !important; /* Space between charts */
+		}
+
+		.chart-container {
+			background-color: #f9f9f9 !important;
+			padding: 15px !important;
+			border-radius: 8px !important;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+		}
+
+		.chart {
+			flex: 1 1 calc(33.333% - 20px) !important; /* Adjust layout */
+			background-color: #f4f4f4 !important;
+			padding: 15px !important;
+			border-radius: 10px !important;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+		}
+
+		.chart-header {
+			font-size: 18px !important;
+			font-weight: bold !important;
+			text-align: center !important;
+			margin-bottom: 10px !important;
+			color: #333 !important;
+		}
+
+		/* Responsive Adjustments */
+		@media (max-width: 768px) {
+
+			.nav-container {
+				width: 100%; /* Full width in mobile view */
+			}
+
+		    .toggle-btn {
+				top: 15px !important; /* Slightly closer to the top */
+				/*left: 250px !important;  Maintain consistent left spacing */
+				width: 40px !important; /* Consistent size */
+				height: 40px !important;
+				z-index: 3000 !important; /* Ensure visibility above everything */
+				right: 10px; /* Consistent placement for toggle button */
+			}
+
+			.dashboard-nav {
+				width: 100% !important; /* Full width in mobile */
+				height: 100% !important; /* Full screen coverage */
+				position: fixed !important; /* Stay on top */
+				top: 0 !important;
+				left: 0 !important;
+				transform: translateX(-100%) !important; /* Hidden by default */
+				z-index: 2000 !important; /* Above other elements */
+			}
+
+			.dashboard-nav.collapsed {
+				transform: translateX(0) !important; /* Slide in from the left */
+				pointer-events: auto !important; /* Enable interactions */
+			}
+
+			.dashboard-nav.collapsed ~ .toggle-btn {
+				right: 20px !important; /* Align correctly in mobile view */
+			}
+
+			.dashboard-nav.expanded ~ .toggle-btn {
+				right: -60px !important; /* Adjust as per menu size in expanded state */
+			}
+
+			.content {
+				margin-left: 0 !important; /* Full-width content */
+			}
+
+			.chart {
+				flex: 1 1 100% !important; /* Full-width charts */
+			}
+		}
+
+		/* Date Filter Styling */
+		.date-filters {
+			display: flex !important;
+			justify-content: space-between !important;
+			margin-bottom: 20px !important;
+		}
+
+		.date-filters input[type="date"] {
+			padding: 8px !important;
+			border: 1px solid #ccc !important;
+			border-radius: 4px !important;
+			font-size: 16px !important;
+		}
+
+		.date-filters button {
+			background-color: #607d8b !important;
+			color: #fff !important;
+			padding: 8px 16px !important;
+			border: none !important;
+			border-radius: 4px !important;
+			cursor: pointer !important;
+		}
+
+		.date-filters button:hover {
+			background-color: #546e7a !important;
+		}
+
+		/* Subscription Details Styling */
+		.subscription-details {
+			font-size: 0.9rem !important; /* Smaller font size */
+			line-height: 1.4 !important; /* Adjust spacing */
+			color: #555 !important; /* Muted color */
+			margin-top: 10px !important; /* Small gap */
+		}
+
+		.subscription-details p {
+			margin: 2px 0 !important; /* Reduce spacing */
+		}
+
+		.subscription-details strong {
+			color: #333 !important; /* Slightly bolder */
+		}
+    </style>
+
+</head>
+	<body>
+		<div class="dashboard-container">
+			<!-- Navigation bar -->
+			<nav class="dashboard-nav">
+				<ul>
+
+					<!-- Stock & Sales Menu -->
+					<li>
+						<a href="#" aria-expanded="false">Sales</a>
+						<ul aria-hidden="true">
+							<li><a href="{% url 'add-stock' %}">Stock</a></li>
+							<li><a href="{% url 'create-sale' %}">Sell</a></li>
+							<li><a href="{% url 'pending-sales' %}">Resume Sale</a></li>
+							<li><a href="{% url 'manage-tables' %}">Tables</a></li>
+						</ul>
+					</li>
+
+					<!-- Users & User Roles Menu -->
+					<li>
+						<a href="#" aria-expanded="false">HR</a>
+						<ul aria-hidden="true">
+							<li><a href="{% url 'profile' %}">My Profile</a></li>
+							<li><a href="{% url 'manage-users' %}?business_id={{ business.id }}">Staff</a></li>
+							<li><a href="#">Salaries</a></li>
+						</ul>
+					</li>
+
+					<!-- Reports Menu -->
+					<li>
+						<a href="#" aria-expanded="false">Reports</a>
+						<ul aria-hidden="true">
+							<li><a href="{% url 'sales-list' %}">Sales</a></li>
+							<li><a href="{% url 'expenditure-report' %}">Expenses</a></li>
+							<li><a href="{% url 'financial-summary' %}">Finance</a></li>
+							<li><a href="#">Staff</a></li>
+							<li><a href="#">Others</a></li>
+						</ul>
+					</li>
+
+					<!-- Return to Business List -->
+					<li>
+						<a href="{% url 'business-list' %}" class="btn btn-primary">Businesses</a>
+					</li>
+
+					<!-- Logout -->
+					<li>
+						<form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+							{% csrf_token %}
+							<button type="submit">Logout</button>
+						</form>
+						<a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</a>
+					</li>
+				</ul>
+			</nav>
+
+			<!-- Toggle Button -->
+			<button class="toggle-btn" onclick="toggleNav()">☰</button>
+
+			<!-- Main Content Area -->
+			<div class="content">
+				<br><br>
+				<div>
+					{% if messages %}
+						<ul class="messages">
+							{% for message in messages %}
+								<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+							{% endfor %}
+						</ul>
+					{% endif %}
+				</div>
+				<h1 style="text-align: center;">Hi {{ request.user.first_name|default:request.user.username }}, welcome to {{ business.name }}.</h1>
+				<div class="subscription-details">
+					<p>
+						Your
+						<strong>{{ business.subscription_plan.subscription_type }}</strong>
+						subscription plan (<u>{{ business.subscription_plan.description }}</u>)
+						is expected to expire on
+						<strong>{{ business.subscription_expiry|date:"Y-m-d H:i" }}</strong>.
+						The premium cost is
+						<strong>{{ business.subscription_plan.amount }} {{ business.subscription_plan.currency }}</strong>
+						at a <strong>{{ business.subscription_plan.frequency }}</strong> rate.
+					</p>
+				</div>
+
+					<div class="date-filters">
+						<div>
+							<label for="start_date">Start Date:</label>
+							<input type="date" id="start_date" name="start_date">
+						</div>
+						<br>
+						<div>
+							<label for="end_date">End Date:</label>
+							<input type="date" id="end_date" name="end_date">
+						</div>
+						<br>
+						<div><button onclick="filterCharts()">Filter</button></div>
+					</div>
+
+				<!-- Charts Container -->
+				<div class="charts-container">
+					<!-- Combined Sales and Predictions Chart -->
+					<div class="chart-container">
+						<h3 class="chart-header">Sales Overview & Baseline</h3>
+						<canvas id="combinedSalesChart"></canvas>
+					</div>
+
+					<!-- Stock Levels Chart -->
+					<div class="chart-container">
+						<h3 class="chart-header">Stock Levels</h3>
+						<canvas id="stockChart"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+    <!-- Signature -->
+    <footer style="position: fixed; bottom: 10px; left: 10px; font-size: 12px; color: #555;">
+        Powered by <strong>DigiServe</strong>
+    </footer>
+	</body>
+	<script>
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/static/service-worker.js')
+				.then((registration) => {
+					console.log('Service Worker registered with scope:', registration.scope);
+				})
+				.catch((error) => {
+					console.log('Service Worker registration failed:', error);
+				});
+		}
+	</script>
+</html>

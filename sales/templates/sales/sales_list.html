@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %}Detailed Sales Report for {{ selected_business.name }}{% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<ul class="messages">
+			{% for message in messages %}
+				<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+		<!-- Period and User Filter Form -->
+		<form method="get" style="text-align: center; margin-bottom: 20px;">
+			<label for="start_date">From:</label>
+			<input type="datetime-local" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+			
+			<label for="end_date">To:</label>
+			<input type="datetime-local" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+			
+			<label for="user">User:</label>
+			<select id="user" name="user">
+				<option value="">All Users</option>
+				{% for user in users %}
+					<option value="{{ user.id }}" {% if user.id|stringformat:"s" == request.GET.user %}selected{% endif %}>{{ user.username }}</option>
+				{% endfor %}
+			</select>
+			
+			<button type="submit">Filter</button>
+		</form>
+		<!-- Total Sales Display -->
+		<h3 style="text-align: center;">Total Sales: {{ total_sales_amount|currency }}</h3>
+
+		<!-- Sales List Table -->
+		<table class="sales-table">
+			<thead>
+				<tr>
+					<th>Item</th>
+					<th>Quantity</th>
+					<th>Total Amount</th>
+					<th>Sold By</th>
+					<th>Date & Time</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% load currency_filters %}
+				{% for sale in sales %}
+					<tr>
+						<td>{{ sale.item.name }}</td>
+						<td>{{ sale.quantity }}</td>
+						<td>{{ sale.total_amount|currency }}</td>
+						<td>{{ sale.user.username }}</td>
+						<td>{{ sale.date_time|date:"Y-m-d H:i" }}</td>
+					</tr>
+				{% empty %}
+					<tr>
+						<td colspan="5" style="text-align: center;">No sales found for the selected period.</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		<!-- Summary by User -->
+		<h2 style="text-align: center;">Summary by User</h2>
+		<table class="summary-table">
+			<thead>
+				<tr>
+					<th>User</th>
+					<th>Units Sold</th>
+					<th>Total Sales</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for summary in sales_summary %}
+					<tr>
+						<td>{{ summary.user__username }}</td>
+						<td>{{ summary.units_sold }}</td>
+						<td>{{ summary.total_sales|currency }}</td>
+					</tr>
+				{% empty %}
+					<tr>
+						<td colspan="3" style="text-align: center;">No sales data available for summary.</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		
+{% endblock %}

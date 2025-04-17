@@ -1,0 +1,24 @@
+<!-- sales/templates/sales/stock_check.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Check</title>
+	{% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>Low Stock Items</h2>
+    <ul>
+        {% for item in low_stock_items %}
+        <li>{{ item.name }} ({{ item.stock }} units left)</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Out of Stock Items</h2>
+    <ul>
+        {% for item in out_of_stock_items %}
+        <li>{{ item.name }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

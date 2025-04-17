@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title style="text-align: center;">Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+	<link rel="manifest" href="{% static 'manifest.json' %}">
+	<script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.1/dist/pouchdb.min.js"></script>
+		
+		<script>
+
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.register('/static/service-worker.js')
+					.then((registration) => {
+						console.log('Service Worker registered with scope:', registration.scope);
+					})
+					.catch((error) => {
+						console.log('Service Worker registration failed:', error);
+					});
+			}
+
+			const remoteAPI = 'https://technothrone.pythonanywhere.com/sales/';
+
+			// Sync businesses
+			const businessDB = new PouchDB('businesses');
+			businessDB.sync(`${remoteAPI}businesses/`, {
+			  live: true,
+			  retry: true,
+			}).on('change', info => {
+			  console.log('Business Sync - Change detected:', info);
+			}).on('error', err => {
+			  console.error('Business Sync - Error:', err);
+			});
+
+			// Sync items
+			const itemDB = new PouchDB('items');
+			itemDB.sync(`${remoteAPI}items/`, {
+			  live: true,
+			  retry: true,
+			}).on('change', info => {
+			  console.log('Item Sync - Change detected:', info);
+			}).on('error', err => {
+			  console.error('Item Sync - Error:', err);
+			});
+
+			// Sync sales
+			const salesDB = new PouchDB('sales');
+			salesDB.sync(`${remoteAPI}sales/`, {
+			  live: true,
+			  retry: true,
+			}).on('change', info => {
+			  console.log('Sales Sync - Change detected:', info);
+			}).on('error', err => {
+			  console.error('Sales Sync - Error:', err);
+			});
+			
+		</script>
+		
+</head>
+<body>
+    <h2 style="text-align: center;">Welcome to DigiServe</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+
+    <p style="text-align: center; margin-top: 20px;">
+        Don't have an account? 
+        <a href="{% url 'register' %}">Register here</a>
+    </p>
+	
+    <footer style="position: fixed; bottom: 10px; right: 10px; font-size: 12px; color: #555;">
+        Powered by <strong>DigiServe</strong>
+    </footer>
+</body>
+</html>

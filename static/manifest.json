@@ -1,0 +1,33 @@
+{
+    "name": "DigiServe Point of Sale",
+    "short_name": "DigiServe",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#035641",
+    "icons": [
+        {
+            "src": "/static/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "id": "POS.0.0.1",
+    "description": "Cloud based Point of Sale system",
+    "dir": "auto",
+    "lang": "en",
+    "orientation": "any",
+    "display_override": [
+    "standalone",
+    "window-controls-overlay"
+    ],
+    "categories": [
+    "business"
+    ]
+}

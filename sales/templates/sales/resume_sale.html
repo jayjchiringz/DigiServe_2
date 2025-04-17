@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %}{{ selected_business.name }} - Resume Sale for Receipt No: {{ sale.receipt_no }} {% endblock %}
+
+{% block content %}
+		<script>
+			function formatCurrency(value) {
+				return 'Kshs ' + parseFloat(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+			}
+
+			function updateGrandTotal() {
+				const totalBill = parseFloat(document.getElementById('total').value.replace(/[^\d.]/g, '')) || 0;
+				const tipAmount = parseFloat(document.getElementById('tip').value) || 0;
+				const grandTotal = totalBill + tipAmount;
+				document.getElementById('grand_total').value = formatCurrency(grandTotal);
+			}
+
+			function updateTotal() {
+				let total = 0;
+				document.querySelectorAll('.item-row').forEach(function(row) {
+					let quantity = row.querySelector('.quantity').value;
+					let price = row.querySelector('.price').value;
+					total += quantity * price;
+				});
+				document.getElementById('total').value = formatCurrency(total);
+				updateGrandTotal();
+			}
+
+			function updateUnitSellingPrice(selectElement) {
+				let itemRow = selectElement.closest('.item-row');
+				let selectedOption = selectElement.options[selectElement.selectedIndex];
+				let price = selectedOption.getAttribute('data-price');
+				let stock = selectedOption.getAttribute('data-stock'); // Get stock from data attribute
+
+				itemRow.querySelector('.price').value = price;
+				itemRow.querySelector('.display-price').innerText = formatCurrency(price);
+
+				// Update the max attribute of the quantity input based on available stock
+				itemRow.querySelector('.quantity').max = stock;
+				itemRow.querySelector('.quantity').setAttribute('data-max', stock); // For further validation
+
+				// Update the item image
+				updateItemImage(itemRow, selectedOption);
+
+				updateTotal()
+			}
+
+			function updateItemImage(itemRow, selectedOption) {
+				const imageUrl = selectedOption.getAttribute('data-image');
+				console.log("Selected image URL:", imageUrl); // Debug log
+				const itemImageElement = itemRow.querySelector('.item-image');
+				const noImageMessageElement = itemRow.querySelector('.no-image-message');
+
+				if (imageUrl && imageUrl.trim() !== "") {
+					itemImageElement.src = imageUrl;
+					itemImageElement.style.display = "block";
+					noImageMessageElement.style.display = "none";
+				} else {
+					itemImageElement.style.display = "none";
+					noImageMessageElement.style.display = "block";
+				}
+			}
+
+			function validateQuantity(quantityInput) {
+				const max = quantityInput.getAttribute('data-max');
+				if (parseInt(quantityInput.value) > parseInt(max)) {
+					alert(`Quantity exceeds available stock (${max} units available).`);
+					quantityInput.value = max; // Set to maximum allowed stock
+				}
+				updateTotal();
+			}
+
+			function addItemRow() {
+				const itemRow = document.querySelector('.item-row').cloneNode(true);
+				const selectElement = itemRow.querySelector('.item');
+
+				itemRow.querySelector('.quantity').value = 1;
+				itemRow.querySelector('.price').value = "";
+				itemRow.querySelector('.display-price').innerText = formatCurrency(0);
+				itemRow.querySelector('.item-image').style.display = "none";
+				itemRow.querySelector('.item-image').src = "";
+				itemRow.querySelector('.no-image-message').style.display = "block";
+
+				// Clear the selected option
+				selectElement.value = "";
+
+				// Attach event listener to the new dropdown
+				selectElement.addEventListener('change', function () {
+					updateUnitSellingPrice(this);
+				});
+
+				document.getElementById('items-container').appendChild(itemRow);
+				updateTotal();
+			}
+
+			function confirmSubmission() {
+				const totalBill = document.getElementById('total').value;
+				const status = document.getElementById('status').value;
+
+				const confirmation = confirm(`Are you sure you want to submit the sale of ${totalBill} as ${status}?`);
+				if (confirmation) {
+					document.querySelector('form').submit(); // Submit the form if confirmed
+				} else {
+					return false; // Prevent form submission if not confirmed
+				}
+			}
+
+			function toggleMpesaNumber() {
+				const paymentMode = document.getElementById('payment_mode').value;
+				const mpesaNumberContainer = document.getElementById('mpesa-number-container');
+				mpesaNumberContainer.style.display = paymentMode === 'MPesa' ? 'block' : 'none';
+			}
+
+			function initializeDropdownListeners() {
+				// Attach onchange event listener to item dropdowns
+				document.querySelectorAll('.item').forEach(function (selectElement) {
+					selectElement.addEventListener('change', function () {
+						const itemRow = selectElement.closest('.item-row');
+						updateItemImage(itemRow, selectElement.options[selectElement.selectedIndex]);
+						updateUnitSellingPrice(this);
+					});
+				});
+			}
+
+			// Call toggleMpesaNumber() when the page loads
+			document.addEventListener("DOMContentLoaded", function () {
+				// Ensure the form exists before trying to attach event listeners
+				const resumeSaleForm = document.getElementById('resume-sale-form');
+				if (!resumeSaleForm) {
+					console.error("The #create-sale-form element does not exist in the DOM.");
+					return; // Exit if form is not found
+				}
+
+				// Attach event listener for form submission
+				resumeSaleForm.addEventListener('submit', function (e) {
+					e.preventDefault(); // Prevent default form submission
+
+					const form = this;
+					const formData = new FormData(form);
+
+					// Send the form data via an AJAX request
+					fetch(form.action, {
+						method: 'POST',
+						body: formData,
+						headers: {
+							'X-Requested-With': 'XMLHttpRequest',
+						},
+					})
+						.then(response => {
+							if (!response.ok) {
+								throw new Error('Failed to submit the sale. Please try again.');
+							}
+							return response.json();
+						})
+						.then(data => {
+							if (data.success) {
+								// Open receipt in a new tab
+								const receiptUrl = `/sales/receipt/${data.receipt_no}/`;
+								window.open(receiptUrl, '_blank');
+
+								// Refresh the current page
+								location.reload();
+							} else {
+								alert(data.message || 'An error occurred. Please try again.');
+							}
+						})
+						.catch(error => {
+							console.error('Error:', error);
+							alert('An unexpected error occurred. Please try again later.');
+						});
+				});
+
+				// Initialize dropdown listeners
+				InitializeDropdownListeners();
+				// Ensure totals are calculated on page load
+				updateTotal();
+				updateGrandTotal();
+			});
+
+		</script>
+
+		<style>
+
+			.item-image-container {
+				display: flex;
+				justify-content: center; /* Horizontal alignment */
+				align-items: center;    /* Vertical alignment */
+				height: 100px;          /* Set a consistent height for the container */
+				width: 100%;            /* Optional: adjust as needed */
+				overflow: hidden;       /* Prevent image overflow */
+				border: 1px solid #ddd; /* Optional: Add a border */
+				background-color: #f9f9f9; /* Optional: Add a background color */
+			}
+
+			.item-image {
+				max-height: 100%; /* Ensure the image fits within the container height */
+				max-width: 100%;  /* Ensure the image fits within the container width */
+			}
+
+		</style>
+
+		{% if messages %}
+			<ul class="messages">
+				{% for message in messages %}
+					<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+				{% endfor %}
+			</ul>
+		{% endif %}
+		<h2 style="text-align: center;">Existing Items</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Item</th>
+					<th>Quantity</th>
+					<th>Unit Price</th>
+					<th>Total</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in existing_items %}
+					<tr>
+						<td>{{ item.item.name }}</td>
+						<td>{{ item.quantity }}</td>
+						<td>{{ item.item.unit_selling_price|currency }}</td>
+						<td>{{ item.total_amount|currency }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<p><strong>Total Existing Bill:</strong> {{ existing_total|currency }}</p>
+
+		<h2 style="text-align: center;">Add New/Update Sale Details</h2>
+		<form method="post" id="resume-sale-form">
+			{% csrf_token %}
+			<!-- Select Table -->
+			<label for="table">Table:</label>
+			<select name="table" id="table" required disabled>
+				<option value="{{ sale.table.id }}" selected>{{ sale.table.name }}</option>
+			</select><br><br>
+
+			<!-- Payment Mode (Pre-selected but editable) -->
+			<label for="payment_mode">Mode of Payment:</label>
+			<select name="payment_mode" id="payment_mode" onchange="toggleMpesaNumber()">
+				<option value="Cash" {% if sale.payment_mode == "Cash" %}selected{% endif %}>Cash</option>
+				<option value="MPesa" {% if sale.payment_mode == "MPesa" %}selected{% endif %}>MPesa</option>
+				<option value="Credit/Debit Card" {% if sale.payment_mode == "Credit/Debit Card" %}selected{% endif %}>Credit/Debit Card</option>
+			</select><br><br>
+
+			<!-- Add MPesa Number Field -->
+			<div id="mpesa-number-container" style="display: none;">
+				<label for="mpesa_number">MPesa Number:</label>
+				<input type="text"
+					   name="mpesa_number"
+					   id="mpesa_number"
+					   placeholder="254XXXXXXXXX"
+					   pattern="^254\d{9}$"
+					   title="Enter a valid MPesa number in the format: 254XXXXXXXXX">
+				<br><br>
+			</div>
+			<script>
+				function toggleMpesaNumber() {
+					const paymentMode = document.getElementById('payment_mode').value;
+					const mpesaNumberContainer = document.getElementById('mpesa-number-container');
+					mpesaNumberContainer.style.display = paymentMode === 'MPesa' ? 'block' : 'none';
+				}
+			</script>
+
+			<!-- Customer Information -->
+			<label for="customer_name">Customer Name (optional):</label>
+			<input type="text" name="customer_name" id="customer_name"><br><br>
+
+			<!-- Items and Quantities -->
+			<div id="items-container">
+				<div class="item-row">
+					<label for="item">Item:</label>
+					<select name="items[]" class="item" onchange="updateUnitSellingPrice(this)">
+						<option value="">Select an item</option>
+						{% for item in items %}
+							<option value="{{ item.id }}"
+									data-price="{{ item.unit_selling_price|floatformat:2 }}"
+									data-stock="{{ item.stock }}"
+									data-image="{{ item.image }}">
+								{{ item.name }} ({{ item.stock }} units available)
+							</option>
+						{% endfor %}
+					</select>
+
+					<label for="quantity">Quantity:</label>
+					<input type="number" name="quantities[]" class="quantity" min="1" value="1" oninput="updateTotal()">
+
+					<label for="unit_selling_price">Unit Selling Price:</label>
+					<span class="display-price">0.00</span>
+
+					<input type="hidden" class="price" name="prices[]" value="">
+					<br>
+
+					<!-- Item Image Display -->
+					<div class="item-image-container">
+						<img src="" alt="No image for the product." class="item-image" style="display: none;">
+						<span class="no-image-message" style="display: none;">No image for the product.</span>
+					</div>
+					<br><br>
+				</div>
+			</div>
+
+			<button type="button" onclick="addItemRow()">Add Another Item</button><br><br>
+
+			<!-- Total Bill -->
+			<label for="total">Total Bill:</label>
+			<input type="text" id="total" name="total" readonly><br><br>
+
+			<!-- Tip Input -->
+			<label for="tip">Tip Amount:</label>
+			<input type="number" id="tip" name="tip" min="0" step="0.01" value="{{ sale.tip|default:0.00 }}" oninput="updateGrandTotal()"><br><br>
+
+			<!-- Grand Total -->
+			<label for="grand_total">Grand Total:</label>
+			<input type="text" id="grand_total" name="grand_total" readonly><br><br>
+
+			<!-- Payment Status -->
+			<label for="status">Transaction Status:</label>
+			<select name="status" id="status">
+				<option value="Unpaid" {% if sale.status == "Unpaid" %}selected{% endif %}>Unpaid</option>
+				<option value="Paid" {% if sale.status == "Paid" %}selected{% endif %}>Paid</option>
+			</select><br><br>
+			<button type="submit">Save Changes</button>
+		</form>
+{% endblock %}

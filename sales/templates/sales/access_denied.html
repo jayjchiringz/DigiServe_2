@@ -1,0 +1,18 @@
+<!-- DigiServe/sales/templates/sales/access_denied.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied</title>
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+</head>
+<body>
+    <div class="error-page">
+        <h1>Access Denied</h1>
+        <p>Sorry, you are not authorized to access this page. Please contact the administrator for further guidance.</p>
+        <a href="{% url 'dashboard' %}" class="btn">Go to Dashboard</a>
+    </div>
+</body>
+</html>

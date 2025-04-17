@@ -1,0 +1,610 @@
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eceff1; /* Silver background */
+            margin: 0;
+            padding: 0;
+        }
+
+
+        /* Header */
+        .header {
+            background-color: #eceff1; /* Silver background */
+            color: #fff;
+            padding: 0;
+            text-align: center;
+        }
+
+        /* Navigation */
+        .nav {
+            background-color: #eceff1; /* Silver background */
+			color: #fff;
+            padding: 10px 20px;
+            text-align: center;			
+			display: flex;
+			justify-content: space-between;
+			list-style: none;
+        }
+
+		.nav li {
+			position: relative;
+			margin: 0 10px;
+		}
+
+		.nav a {
+			color: white;
+			text-decoration: none;
+			padding: 8px 16px;
+			display: block;
+		}
+
+		.nav a:hover {
+			background-color: #555;
+			color: white;
+		}
+
+        .nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: space-between; /* Distributes items evenly */
+            align-items: center;
+        }
+
+        .nav ul li {
+			background-color: #607d8b; /* Set the same background color as buttons */
+			padding: 0; /* Ensure no padding around the list item */
+        }
+
+        .nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+		
+		
+		/* Adjusting navigation buttons */
+		.nav ul li a,
+		.nav ul li button {
+			color: #fff;
+			text-decoration: none;
+			font-weight: bold;
+			padding: 10px 20px;
+			border-radius: 5px;
+			transition: background-color 0.3s ease;
+			background-color: #607d8b;
+			border: none;
+			cursor: pointer;
+			margin: 5px; /* Add margin to create space around buttons */
+			display: inline-block; /* Use inline-block to keep buttons compact */
+		}
+		
+
+        .nav ul li a:hover,
+        .nav ul li button:hover {
+            background-color: #455a99; /* Lighter blue on hover */
+			border: none;
+		}
+
+
+        .nav ul li a.logout-link {
+            margin-left: auto; /* Moves Logout button to the right */
+        }
+
+
+		/* Dropdown Menu */
+		.dropdown:hover .dropdown-menu {
+			display: block;
+		}
+
+		.dropdown-menu {
+			display: none;
+			position: absolute;
+			background-color: #444;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+			margin-top: 5px;
+			list-style: none;
+			padding: 0;
+			min-width: 150px;
+		}
+
+		.dropdown-menu li {
+			width: 100%;
+		}
+
+		.dropdown-menu a {
+			padding: 8px 16px;
+			display: block;
+			color: white;
+		}
+
+		.dropdown-menu a:hover {
+			background-color: #555;
+		}
+
+        /* Content */
+        .content {
+            padding: 20px;
+			margin: 20px;
+        }
+
+        h1, h2 {
+            color: #546e7a; /* Deep blue-grey */
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #ffffff; /* White background for each item */
+            border: 1px solid #b0bec5; /* Light grey border */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        strong {
+            color: #37474f; /* Darker grey for strong text */
+        }
+
+        form {
+            margin-top: 10px;
+			margin-bottom: 20px;
+			text-align: center;
+        }
+
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #b0bec5;
+            border-radius: 4px;
+            width: 150px;
+        }
+
+
+		button[type="submit"] {
+			padding: 10px 20px;
+			background-color: #607d8b;
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: background-color 0.3s ease;
+		}
+
+
+		button[type="submit"]:hover {
+			background-color: #455a64;
+		}
+
+
+		button {
+			width: 100%; /* Full width for buttons */
+			padding: 12px;
+			margin-top: 15px; /* Add margin between buttons */
+			background-color: #607d8b; /* Ocean blue-grey */
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: background-color 0.3s ease;
+		}
+
+
+        button:hover {
+            background-color: #455a64; /* Darker shade on hover */
+        }
+
+
+        hr {
+            border: none;
+            border-top: 1px solid #b0bec5; /* Light grey border for horizontal rule */
+            margin: 20px 0;
+        }
+
+
+		/* Link buttons */
+		a {
+			display: inline-block;
+			background-color: #607d8b; /* Same as button color */
+			color: #fff;
+			padding: 10px 15px;
+			text-decoration: none;
+			border-radius: 5px;
+			transition: background-color 0.3s ease;
+			margin-top: 15px; /* Add space above the links */
+			margin-right: 10px; /* Space between link buttons */
+			margin: 20px 5px 0 5px;
+		}
+
+
+		a:hover {
+			background-color: #455a64; /* Darker shade on hover */
+		}
+
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+
+        .messages li {
+            background-color: #cfd8dc; /* Soft blue-grey */
+            color: #455a64; /* Dark blue-grey */
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+
+		/* Form and labels styling */
+		form {
+			max-width: 600px;
+			margin: 0 auto; /* Center form on page */
+			background-color: #ffffff; /* White background for form */
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+		
+
+		label {
+			display: block;
+			margin-bottom: 10px;
+			font-weight: bold;
+			color: #546e7a; /* Deep blue-grey */
+		}	
+
+
+		input[type="text"],
+		input[type="number"],
+		select {
+			width: 100%; /* Full width */
+			padding: 10px; /* Padding inside the input */
+			margin-bottom: 15px; /* Space between elements */
+			border: 1px solid #b0bec5; /* Light grey border */
+			border-radius: 4px; /* Rounded corners */
+			box-sizing: border-box; /* Ensures padding doesn't affect overall width */
+			background-color: #f5f5f5; /* Light grey background */
+			color: #37474f; /* Dark grey text color */
+			font-size: 14px; /* Font size */
+		}
+
+
+		/* Focus state for text boxes and dropdowns */
+		input[type="text"]:focus,
+		input[type="number"]:focus,
+		select:focus {
+			border-color: #607d8b; /* Darker border on focus */
+			outline: none; /* Removes default outline */
+		}
+
+
+		input[type="datetime-local"] {
+			padding: 8px;
+			border: 1px solid #b0bec5;
+			border-radius: 4px;
+			width: 200px;
+			margin: 0 10px;
+			font-size: 14px;
+		}
+
+
+		/* Style for the select dropdown */
+		select {
+			appearance: none; /* Removes default arrow */
+			background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 width%3D%2224%22 height%3D%2224%22 viewBox%3D%220 0 24 24%22%3E%3Cpath fill%3D%22%2337474f%22 d%3D%22M7 10l5 5 5-5z%22/%3E%3C/svg%3E'); /* Custom arrow */
+			background-repeat: no-repeat;
+			background-position: right 10px top 50%; /* Arrow position */
+			background-size: 16px 16px; /* Arrow size */
+			padding-right: 30px; /* Space for the arrow */
+		}
+
+
+		/* Profile Container */
+		.profile-container {
+			max-width: 400px;
+			margin: 0 auto;
+			padding: 20px;
+			background-color: #eceff1; /* Silver background */
+			border-radius: 10px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			text-align: center;
+		}
+
+		.profile-picture img {
+			width: 150px;
+			height: 150px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid #cccccc;
+		}
+
+		.user-info {
+			margin-top: 20px;
+		}
+
+		.user-info p {
+			margin: 10px 0;
+			font-size: 1.2em;
+		}
+
+
+		/* Responsive Design */
+
+		/* Mobile Devices (600px and less) */
+		@media (max-width: 600px) {
+			.dashboard-nav {
+				width: 100%;
+				height: auto;
+				position: relative;
+			}
+
+			.dashboard-nav.collapsed {
+				width: 100%;
+			}
+
+			.content {
+				margin-left: 0;
+				padding: 15px;
+			}
+
+			.toggle-btn {
+				top: 10px;
+				left: 10px;
+				width: calc(100% - 20px);
+				text-align: center;
+				border-radius: 5px;
+			}
+
+			.dashboard-nav ul li a {
+				text-align: center;
+				padding: 10px 5px;
+			}
+
+			.dashboard-header {
+				flex-direction: column;
+				padding: 10px;
+			}
+
+			.dashboard-header h1 {
+				font-size: 1.5em;
+			}
+
+			.profile-container {
+				width: 100%;
+				margin: 10px 0;
+			}
+
+			.profile-picture img {
+				width: 100px;
+				height: 100px;
+			}
+		}
+
+		/* Tablets (601px to 992px) */
+		@media (min-width: 601px) and (max-width: 992px) {
+			.dashboard-nav {
+				width: 200px;
+			}
+
+			.content {
+				margin-left: 220px;
+			}
+
+			.dashboard-nav ul li a {
+				padding: 8px 12px;
+			}
+
+			.profile-container {
+				width: 80%;
+			}
+		}
+
+		/* Desktops (993px and up) */
+		@media (min-width: 993px) {
+			.dashboard-nav {
+				width: 250px;
+			}
+
+			.content {
+				margin-left: 270px;
+			}
+
+			.dashboard-nav ul li a {
+				padding: 10px 15px;
+			}
+
+			.profile-container {
+				width: 60%;
+			}
+		}
+
+		/* Responsive Table */
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		table th, table td {
+			padding: 10px;
+			text-align: left;
+		}
+
+		table th {
+			background-color: #78909c;
+			color: white;
+		}
+
+		@media (max-width: 600px) {
+			table thead {
+				display: none;
+			}
+
+			table tr {
+				display: block;
+				margin-bottom: 20px;
+			}
+
+			table td {
+				display: block;
+				text-align: right;
+				padding-left: 50%;
+				position: relative;
+			}
+
+			table td::before {
+				content: attr(data-label);
+				position: absolute;
+				left: 0;
+				width: 50%;
+				padding-left: 15px;
+				font-weight: bold;
+				text-align: left;
+			}
+		}
+
+		/* Responsive Canvas */
+		canvas {
+			max-width: 100%;
+			height: auto;
+		}
+
+		/* Error style */
+		.error-page {
+			text-align: center;
+			margin-top: 50px;
+		}
+
+		.error-page h1 {
+			font-size: 3em;
+			color: #ff0000;
+		}
+
+		.error-page p {
+			font-size: 1.5em;
+			margin-bottom: 20px;
+		}
+
+		.error-page .btn {
+			padding: 10px 20px;
+			background-color: #007bff;
+			color: white;
+			text-decoration: none;
+			border-radius: 5px;
+		}
+
+		.error-page .btn:hover {
+			background-color: #0056b3;
+		}
+
+
+		/* Receipt Styles */
+		.receipt-container {
+			max-width: 300px;  /* A typical receipt width */
+			margin: 0 auto;
+			padding: 15px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			background-color: #fff;
+		}
+
+		.receipt-container h1 {
+			font-size: 1.5em;
+			margin-bottom: 20px;
+			text-align: center;
+		}
+
+		.receipt-container p {
+			margin: 5px 0;
+		}
+
+		.receipt-container table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+		}
+
+		.receipt-container table th, 
+		.receipt-container table td {
+			padding: 8px;
+			text-align: left;
+			border-bottom: 1px solid #ddd;
+			font-size: 0.9em;
+		}
+
+		.receipt-container table th {
+			font-weight: bold;
+		}
+
+		.receipt-container hr {
+			margin: 15px 0;
+		}
+
+		.receipt-container h3 {
+			font-size: 1.2em;
+			margin: 10px 0;
+		}
+
+		/* Hide buttons when printing */
+		@media print {
+			button {
+				display: none;
+			}
+		}
+
+
+
+.sales-table, .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.sales-table th, .summary-table th {
+    background-color: #607d8b;
+    color: #ffffff;
+    padding: 10px;
+}
+
+.sales-table td, .summary-table td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.sales-table tr:nth-child(even), .summary-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.sales-table tr:hover, .summary-table tr:hover {
+    background-color: #ddd;
+}
+
+
+.financial-summary {
+    margin: 20px auto;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #f4f4f4;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.financial-summary h2 {
+    text-align: center;
+    color: #607d8b;
+}
+
+.financial-summary p {
+    font-size: 1.1em;
+    margin: 10px 0;
+}

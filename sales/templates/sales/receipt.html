@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+	{% load currency_filters %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+    <style>
+        /* Receipt Styles */
+        .receipt-container {
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .receipt-container h1 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .receipt-container p {
+            margin: 5px 0;
+        }
+
+        .receipt-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .receipt-container table th, 
+        .receipt-container table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+
+        .receipt-container table th {
+            font-weight: bold;
+        }
+
+        .receipt-container hr {
+            margin: 15px 0;
+        }
+
+        .receipt-container h3 {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        /* Hide buttons when printing */
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+		<!-- Display business logo -->
+		{% if business.logo %}
+			<img src="{{ business.logo.url }}" alt="{{ business.name }}" style="width: 100px; height: auto; display: block; margin: 0 auto;">
+		{% endif %}
+		
+        <h1>{{ business.name }}</h1>
+		
+        <div class="receipt">
+            <p><strong>Receipt No:</strong> {{ receipt_no }}</p>
+            <p><strong>Date:</strong> {{ date_time|date:"Y-m-d H:i" }}</p>
+            <p><strong>Customer Name:</strong> {{ customer_name }}</p>
+            <p><strong>Status:</strong> {{ status }}</p>
+            <p><strong>Payment Mode:</strong> {{ payment_mode }}</p>
+            <hr>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price(@)</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.item.name }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td>{{ sale.item.unit_selling_price|currency }}</td>
+                        <td>{{ sale.total_amount|currency }}</td>                    
+					</tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <hr>
+
+            <!-- Tip and Grand Total -->
+            <p><strong>Subtotal:</strong> {{ total_amount|currency }}</p>
+            <p><strong>Tip:</strong> {{ tip|default:0.00|currency }}</p>
+            <h3>Grand Total: {{ total_amount|add:tip|currency }}</h3>
+
+            {% if sales.0.qr_code %}
+            <img src="{{ sales.first.qr_code.url }}" alt="QR Code" style="display: block; margin: 20px auto; width: 100px; height: auto;">
+            {% else %}
+            <p>QR code not available.</p>
+            {% endif %}
+			
+			<p><strong>Served By:</strong> {{ served_by }}</p>
+
+            <button onclick="window.print()">Print Receipt</button>
+            <button onclick="shareReceipt()">Share Receipt</button>
+        </div>
+
+		<!-- Signature -->
+		<p style="text-align: center; margin-top: 20px; font-size: 0.9em; color: #555;">Powered by DigiServe</p>		
+	</div>
+
+    <script>
+        function shareReceipt() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Receipt',
+                    text: `Total: {{ total_amount|currency }}\nStatus: {{ status }}`,
+                    url: window.location.href
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(console.error);
+            } else {
+                alert('Sharing is not supported in this browser.');
+            }
+        }
+    </script>
+</body>
+</html>

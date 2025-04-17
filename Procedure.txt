@@ -1,0 +1,309 @@
+C:\Users\dell\Django Project\DigiServe>python -m venv venv
+
+C:\Users\dell\Django Project\DigiServe>venv\Scripts\activate
+
+(venv) C:\Users\dell\Django Project\DigiServe>pip install django
+
+(venv) C:\Users\dell\Django Project\DigiServe>python.exe -m pip install --upgrade pip
+
+(venv) C:\Users\dell\Django Project\DigiServe>django-admin startproject DigiServe
+
+(venv) C:\Users\dell\Django Project\DigiServe>cd DigiServe
+
+(venv) C:\Users\dell\Django Project\DigiServe\DigiServe>python manage.py startapp sales
+
+(venv) C:\Users\dell\Django Project\DigiServe\DigiServe>python manage.py makemigrations
+Migrations for 'sales':
+  sales\migrations\0001_initial.py
+    + Create model Item
+    + Create model Report
+    + Create model Sale
+    + Create model StockEntry
+
+(venv) C:\Users\dell\Django Project\DigiServe\DigiServe>
+
+python manage.py runserver --verbosity 3
+
+DigiServe/
+├── DigiServe/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── middleware.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── media/
+├── qr_codes/
+├── static/            		
+│   ├── css/
+│   │   ├── style.css          	
+│   │   └── style_2.css
+│   └── images/
+│       ├── favicon_io/        	
+│       ├── favicon.ico        	
+│       └── Logo.webp
+├── staticfiles/
+├── sales/
+│   ├── __pycache__/
+│   ├── migrations/
+│   ├── templates/
+│   │   ├── registration/
+│   │   │   ├── csrf_failure.html
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   ├── sales/
+│   │   │   ├── access_denied.html
+│   │   │   ├── add_item.html
+│   │   │   ├── add_stock.html
+│   │   │   ├── create_sale.html   	
+│   │   │   ├── csrf_failure.html
+│   │   │   ├── financial_summary.html
+│   │   │   ├── profile.html    	
+│   │   │   ├── receipt.html
+│   │   │   ├── sales_list.html
+│   │   │   ├── sales_report.html   
+│   │   │   ├── stock_check.html
+│   │   │   ├── stock_list.html
+│   │   │   ├── update_price.html   
+│   │   │   └── view_price_history.html
+│   │   ├── csrf_failure.html
+│   │   └── dashboard.html
+│   ├── templatetags/
+│   │   ├── __pycache__/    	
+│   │   └── currency_filters.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── payments.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── utils.py
+│   └── views.py
+├── venv/                          		# Virtual environment directory
+├── db.sqlite3                     		# SQLite database file
+├── manage.py                      		# Django management script
+├── requirements.txt               		# Python dependencies (optional)
+└── Dockerfile
+
+# After making changes
+python manage.py makemigrations sales
+python manage.py migrate
+
+
+# Assign permission to users
+python manage.py shell
+
+from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission
+
+user = User.objects.get(username='dell')
+permission = Permission.objects.get(codename='add_item')
+user.user_permissions.add(permission)
+user.save()
+
+
+# Access SQL Lite using Django
+python manage.py shell
+
+docker build -t digiserveacr.azurecr.io/digiserve-app:v2 .
+docker push digiserveacr.azurecr.io/digiserve-app:v2
+az webapp config container set --name digiserve-app --resource-group DigiServeGroup --docker-custom-image-name digiserveacr.azurecr.io/digiserve-app:v2
+
+az acr create --resource-group DigiServeGroup --name digiserveacr --sku Basic
+
+az acr login --name digiserveacr
+
+docker tag digiserve-app digiserveacr.azurecr.io/digiserve-app:v1
+
+docker push digiserveacr.azurecr.io/digiserve-app:v1
+
+az acr repository list --name digiserveacr --output table
+
+az appservice plan create --name DigiServeSP --resource-group DigiServeGroup --sku B1 --is-linux
+
+az acr update --name digiserveacr --admin-enabled true
+
+az acr credential show --name digiserveacr
+
+(venv) C:\Users\dell\Django Project\DigiServe>az acr credential show --name digiserveacr
+
+az webapp config container set --name digiserve-app --resource-group DigiServeGroup --docker-custom-image-name digiserveacr.azurecr.io/digiserve-app:v1 --docker-registry-server-url https://digiserveacr.azurecr.io --docker-registry-server-user digiserveacr --docker-registry-server-password UT0YpYpVDfC0HtDQkNGMZcJA1cppkaVCl5d305o+dS+ACRDzdTbV
+
+az webapp config appsettings set --resource-group DigiServeGroup --name digiserve-app --settings DEBUG=0 DJANGO_SETTINGS_MODULE=DigiServe.settings
+
+az webapp create --resource-group DigiServeGroup --plan DigiServeSP --name digiserve-app --deployment-container-image-name digiserveacr.azurecr.io/digiserve-app:v1
+
+Steps to deploy
+1. az login
+
+2. az acr login --name digiserveacr
+
+3. docker build -t digiserveacr.azurecr.io/digiserve-app:v12 .
+
+4. docker push digiserveacr.azurecr.io/digiserve-app:v12
+
+5. az webapp config container set --name digiserve-app --resource-group DigiServeGroup --docker-custom-image-name digiserveacr.azurecr.io/digiserve-app:v12
+
+6. az webapp log config --name digiserve-app --resource-group DigiServeGroup --application-logging filesystem --level information
+
+http://192.168.56.1:8000
+
+unrar x DigiServe.rar
+
+sudo firewall-cmd --permanent --add-port=5000/tcp
+sudo firewall-cmd --reload
+
+
+python manage.py runserver 0.0.0.0:8000
+
+nohup python manage.py runserver 0.0.0.0:5000 > manage.log 2>&1 &
+
+tail -f manage.log
+
+# Notes from Wamukoya
+1. Dashboard. minimize space occupied			#Done
+2. Add date filter in the dashboard				#Done
+3. Scroll bar graph of stock					#Done							
+4. Combine sales overview & prediction			#Done
+5. In adding stock restrict negative 			#Done
+6. Change Add stock to Update Stock				#Done
+7. Update existing units / packages				------
+8. Package type drop down						------
+9. Current stock price to update				------		
+10. In transact sale restrict total items to total number of stock available	#Done
+11. Customer Number to be Mpesa Number											#Done
+12. Mode of payment to appear on top of the transact sale interface				#Done
+13. Order list alphabetically					
+14. Solve double receipt						#Done
+15. Integration of MPESA SDK					#Done
+------------------------------------------------------------------------------------------
+sqlite3
+python manage.py shell
+
+from sales.models import Item
+# List all items and their stock levels
+items = Item.objects.all()
+for item in items:
+    print(f"{item.name} - {item.stock} units available")
+
+# Fetch a specific item by name (case-sensitive)
+item = Item.objects.get(name="Soda 500ml")
+print(f"{item.name} - {item.stock} units available")
+
+SELECT * FROM sales WHERE name='Soda 500ml';
+
+-----------------------------------------------------
+SQLite3 access
+
+python manage.py shell
+
+from postal.models import PaymentInfo
+
+# Get all payments
+all_payments = PaymentInfo.objects.all()
+print(all_payments)
+
+# Check if any payments have a 'Completed' status
+completed_payments = PaymentInfo.objects.filter(payment_status='Completed')
+print(completed_payments)
+
+------------------------------------------------------------
+ngrok http 8000
+
+# Remove foler
+rm -r DigiServe
+
+# Create requirements.txt
+pip freeze > requirements.txt
+
+unrar x DigiServe.rar
+
+# Create olenv
+python3 -m venv olenv
+
+sudo lsof -i :5000
+
+------------------------------------------------------------------------
+# Delete duplicate records from SQLite3
+
+from collections import Counter
+from sales.models import Sale
+
+# Step 1: Identify duplicate receipt numbers
+receipt_counts = Counter(Sale.objects.values_list('receipt_no', flat=True))
+duplicates = [receipt for receipt, count in receipt_counts.items() if count > 1]
+
+# Step 2: For each duplicate, delete all but one entry
+for receipt_no in duplicates:
+    sales_with_duplicate_receipt = Sale.objects.filter(receipt_no=receipt_no)
+    # Keep the first occurrence, delete the rest
+    sales_with_duplicate_receipt.exclude(id=sales_with_duplicate_receipt.first().id).delete()
+
+print("Duplicates removed successfully.")
+
+python manage.py makemigrations
+python manage.py migrate
+
+
+----------------------------------------------------------------------------------
+python manage.py shell
+
+from collections import Counter
+from sales.models import Sale
+
+# Find duplicates
+receipt_counts = Counter(Sale.objects.values_list('receipt_no', flat=True))
+duplicates = [receipt for receipt, count in receipt_counts.items() if count > 1]
+
+# Print out duplicates and their occurrences
+for receipt_no in duplicates:
+    print(receipt_no, Sale.objects.filter(receipt_no=receipt_no).count())
+
+for receipt_no in duplicates:
+    sales_with_duplicate_receipt = Sale.objects.filter(receipt_no=receipt_no)
+    # Keep the first instance, delete the rest
+    sales_with_duplicate_receipt.exclude(id=sales_with_duplicate_receipt.first().id).delete()
+
+---------------------------------------------------------------------------------------
+# compress folders in Linux os
+tar -czvf DigiServe_bckp.tar.gz .
+
+from collections import Counter
+from sales.models import Sale
+
+# Get all receipt numbers
+receipt_numbers = Sale.objects.values_list('receipt_no', flat=True)
+
+# Find duplicates
+duplicates = [item for item, count in Counter(receipt_numbers).items() if count > 1]
+print("Duplicate receipt numbers:", duplicates)
+
+for duplicate in duplicates:
+    Sale.objects.filter(receipt_no=duplicate).delete()
+--------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pip freeze > requirements.txt
+
+nssm install DigiServe "C:\Users\dell\AppData\Local\Microsoft\WindowsApps\python.exe" "C:\Users\dell\OneDrive\Projects\Django Project\DigiServe\manage.py" runserver 0.0.0.0:8000
+
+C:\Users\Aviator\Downloads\nssm-2.24\nssm-2.24\win64\nssm.exe start DigiServe
+C:\Users\Aviator\Downloads\nssm-2.24\nssm-2.24\win64\nssm.exe stop DigiServe
+C:\Users\Aviator\Downloads\nssm-2.24\nssm-2.24\win64\nssm.exe restart DigiServe
+
+To check service status:
+You can check the status from the Windows Services Manager:
+
+Open Run with Win + R.
+Type services.msc and hit Enter.
+Look for the PostXpress service to see if it’s running.
+With this setup, your Django app should now run as a background service on your VM without needing the console open.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+python manage.py runserver 0.0.0.0:8000
+
+python manage.py shell
+from django.core.cache import cache
+cache.clear()

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %} Manage Tables for {{ selected_business.name }} {% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<ul class="messages">
+			{% for message in messages %}
+				<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}	
+	
+    <!-- Add Table Button -->
+    <button class="btn btn-primary" onclick="openAddTableModal()">Add New Table</button>
+
+    <!-- Table List -->
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td>{{ table.name }}</td>
+                <td>{{ table.description|default:"No description" }}</td>
+                <td>{{ table.is_active|yesno:"Active,Inactive" }}</td>
+				<td>
+					<!-- Edit Stock Link -->
+					<a href="javascript:void(0);"
+						class="table-link table-link-teal"
+						onclick="openEditTableModal(
+							'{{ table.id }}',
+							'{{ table.name|escapejs }}',
+							'{{ table.description|default:''|escapejs }}',
+							'{{ table.is_active|yesno:'true,false' }}')">
+						Edit
+					</a>
+
+					<a href="{% url 'delete-table' table.id %}"
+						class="table-link table-link-red"
+						onclick="return confirm('Are you sure you want to delete this table?');">
+						Delete
+					</a>
+				</td>
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">No tables available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Add Table Modal -->
+    <div id="add-table-modal" class="modal">
+        <div class="modal-content">
+            <form method="post" action="{% url 'add-table' %}">
+                {% csrf_token %}
+                <h2>Add New Table</h2>
+                <label for="add-name">Table Name:</label>
+                <input type="text" name="name" id="add-name" required>
+                <label for="add-description">Description:</label>
+                <textarea name="description" id="add-description"></textarea>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-danger" onclick="closeModal('add-table-modal')">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+	<!-- Edit Table Modal -->
+	<div id="edit-table-modal" class="modal">
+		<div class="modal-content">
+			<form id="edit-table-form" method="post">
+				{% csrf_token %}
+				<h2>Edit Table</h2>
+				<input type="hidden" name="id" id="edit-id">
+				<label for="edit-name">Table Name:</label>
+				<input type="text" name="name" id="edit-name" required>
+				<label for="edit-description">Description:</label>
+				<textarea name="description" id="edit-description"></textarea>
+				<label for="edit-status">Status:</label>
+				<select name="is_active" id="edit-status">
+					<option value="true">Active</option>
+					<option value="false">Inactive</option>
+				</select>
+				<button type="submit" class="btn btn-primary">Save Changes</button>
+				<button type="button" class="btn btn-danger" onclick="closeModal('edit-table-modal')">Cancel</button>
+			</form>
+		</div>
+	</div>
+
+    <script>
+
+        function openAddTableModal() {
+            document.getElementById('add-table-modal').style.display = 'block';
+        }
+
+		function openEditTableModal(id, name, description, isActive) {
+			// Populate modal fields
+			document.getElementById('edit-id').value = id;
+			document.getElementById('edit-name').value = name;
+			document.getElementById('edit-description').value = description;
+			document.getElementById('edit-status').value = isActive === 'true' ? 'true' : 'false';
+
+			// Set form action dynamically
+			const editForm = document.getElementById('edit-table-form');
+			editForm.action = `/manage-tables/${id}/edit/`;
+
+			// Display the modal
+			document.getElementById('edit-table-modal').style.display = 'block';
+		}
+
+		function closeModal(modalId) {
+			document.getElementById(modalId).style.display = 'none';
+		}
+
+		// Close modal when clicking outside the content
+		window.onclick = function (event) {
+			const addModal = document.getElementById('add-table-modal');
+			const editModal = document.getElementById('edit-table-modal');
+
+			if (event.target === addModal) closeModal('add-table-modal');
+			if (event.target === editModal) closeModal('edit-table-modal');
+		};
+
+    </script>
+{% endblock %}

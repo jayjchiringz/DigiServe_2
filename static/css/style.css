@@ -1,0 +1,437 @@
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background-color: #d9d9d9; /* Light silver background */
+    flex-direction: column; /* For small screens, flex column */
+}
+
+/* Labels */
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #546e7a; /* Deep blue-grey */
+}
+
+/* Header */
+.dashboard-header {
+    background-color: #607d8b; /* Ocean blue-grey */
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-header .logo img {
+    height: 60px; /* Reduced logo size */
+    margin-right: 15px;
+}
+
+.dashboard-header h1 {
+    font-size: 1.8em;
+    margin: 0;
+}
+
+/* Navigation */
+.dashboard-nav {
+    background-color: #78909c; /* Lighter blue-grey */
+    color: #fff;
+    padding: 20px;
+    text-align: left;
+    width: 250px;
+    height: 100vh;
+    position: fixed; /* Fixed positioning */
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    z-index: 500; /* Lower z-index than messages */
+    transition: width 0.3s ease;
+}
+
+
+.dashboard-nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard-nav ul li {
+    padding: 10px;
+    cursor: pointer;
+    position: relative;
+}
+
+.dashboard-nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    display: block;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-nav ul li a:hover,
+.dashboard-nav ul li:hover > a {
+    background-color: #90a4ae; /* Soft blue-grey on hover */
+}
+
+.dashboard-nav ul li ul {
+    display: none;
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+.dashboard-nav ul li:hover ul {
+    display: block;
+    position: relative;
+    background-color: #303f9f; /* Darker blue for sub-menu */
+    z-index: 1000;
+}
+
+.dashboard-nav ul li ul li {
+    padding: 8px 0;
+}
+
+/* Collapsible Navigation */
+.dashboard-nav.collapsed {
+    width: 70px;
+}
+
+.dashboard-nav.collapsed ul li a {
+    text-align: center;
+    padding: 10px 5px;
+}
+
+.dashboard-nav.collapsed ul li ul {
+    position: absolute;
+    left: 70px;
+    top: 0;
+    background-color: #2c387e;
+}
+
+/* Main Content */
+.content {
+    padding: 20px;
+    margin-left: 270px;
+    flex-grow: 1;
+    transition: margin-left 0.3s ease;
+}
+
+.content.collapsed {
+    margin-left: 90px;
+}
+
+.content h1 {
+    margin-bottom: 20px;
+    color: #546e7a; /* Deep blue-grey */
+}
+
+/* Toggle Button Styling */
+.toggle-btn {
+    position: fixed;       /* Fixed position to "hang" it */
+    top: 20px;             /* 20px from the top */
+    left: 270px;           /* Align with the expanded navigation */
+    background-color: #607d8b;  /* Same color as the nav */
+    color: #fff;
+    border: none;
+    padding: 12px 18px;    /* Adjust padding for a better appearance */
+    cursor: pointer;
+    transition: left 0.3s ease, background-color 0.3s ease;
+    border-radius: 0 5px 5px 0; /* Rounded right side for hanging look */
+    z-index: 1000;          /* Ensure it stays above other elements */
+}
+
+
+.content.collapsed ~ .toggle-btn {
+    left: 70px;
+}
+
+.dashboard-nav.collapsed ~ .toggle-btn {
+    left: 70px;
+    background-color: #1a237e;
+}
+
+
+/* Messages */
+.messages {
+    margin: 40px 0; /* Adjust top margin if needed */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    z-index: 1000; /* Ensure it appears above other elements */
+    position: relative; /* Ensure z-index takes effect */
+}
+
+.message {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+/* Error message styling */
+.message.error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+/* Success message styling */
+.message.success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+
+/* Profile Container */
+.profile-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #eceff1; /* Silver background */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-picture img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #cccccc;
+}
+
+.user-info {
+    margin-top: 20px;
+}
+
+.user-info p {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+h1, h2, h3 {
+    color: #546e7a; /* Deep blue-grey */
+    margin-bottom: 20px;
+}
+
+/* Responsive Design */
+
+/* Mobile Devices (600px and less) */
+@media (max-width: 600px) {
+    .dashboard-nav {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .dashboard-nav.collapsed {
+        width: 100%;
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .toggle-btn {
+		position: fixed;
+        top: 10px;
+        left: 10px;
+        width: calc(100% - 20px);
+        text-align: left;
+        border-radius: 5px;
+		border: none;
+		padding: 12px 18px;    /* Adjust padding for a better appearance */
+		cursor: pointer;
+		transition: left 0.3s ease, background-color 0.3s ease;
+		border-radius: 0 5px 5px 0; /* Rounded right side for hanging look */
+		z-index: 1000; 		
+    }
+
+    .dashboard-nav ul li a {
+        text-align: center;
+        padding: 10px 5px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5em;
+    }
+
+    .profile-container {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .profile-picture img {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+/* Tablets (601px to 992px) */
+@media (min-width: 601px) and (max-width: 992px) {
+    .dashboard-nav {
+        width: 200px;
+    }
+
+    .content {
+        margin-left: 220px;
+    }
+
+    .dashboard-nav ul li a {
+        padding: 8px 12px;
+    }
+
+    .profile-container {
+        width: 80%;
+    }
+}
+
+/* Desktops (993px and up) */
+@media (min-width: 993px) {
+    .dashboard-nav {
+        width: 250px;
+    }
+
+    .content {
+        margin-left: 270px;
+    }
+
+    .dashboard-nav ul li a {
+        padding: 10px 15px;
+    }
+
+    .profile-container {
+        width: 60%;
+    }
+}
+
+/* Responsive Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #78909c;
+    color: white;
+}
+
+@media (max-width: 600px) {
+    table thead {
+        display: none;
+    }
+
+    table tr {
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    table td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+    }
+}
+
+
+/* Responsive Canvas */
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+
+/* Content Paragraph */
+.content p {
+    font-size: 1.1em;
+    color: #37474f; /* Darker blue-grey */
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-align: justify;
+    background-color: #eceff1; /* Slightly darker background */
+    padding: 15px;
+    border-radius: 5px;
+}
+
+		/*Buttons*/
+		button[type="submit"] {
+			padding: 10px 20px;
+			background-color: #607d8b;
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: background-color 0.3s ease;
+		}
+
+
+		button[type="submit"]:hover {
+			background-color: #455a64;
+		}
+
+
+		button {
+			width: 100%; /* Full width for buttons */
+			padding: 12px;
+			margin-top: 15px; /* Add margin between buttons */
+			background-color: #607d8b; /* Ocean blue-grey */
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: background-color 0.3s ease;
+		}
+
+
+        button:hover {
+            background-color: #455a64; /* Darker shade on hover */
+        }
+
+/* Flexbox layout for charts */
+.charts-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.chart {
+    flex: 1 1 30%;  /* Each chart takes up 30% of the width */
+    min-width: 300px;  /* Minimum width to ensure charts don't shrink too much */
+    margin: 20px;
+}
+
+canvas {
+    width: 100% !important;  /* Ensure the canvas stretches to fill its container */
+    height: auto !important;  /* Keep the aspect ratio */
+}

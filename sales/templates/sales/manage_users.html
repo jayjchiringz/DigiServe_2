@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %} Manage Users for {{ selected_business.name }} {% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<ul class="messages">
+			{% for message in messages %}
+				<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}	
+    <!-- Add User Button --> 
+    <button class="btn btn-primary"
+			onclick="toggleModal('create-user-modal')">
+			Add User
+	</button>	
+
+    <!-- Users Table -->
+    <table>
+        <thead>
+            <tr>
+				<th>Profile pic</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role(s)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+				<td>
+					{% if user.profile and user.profile.profile_picture %}
+						<img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" style="width:50px; height:50px; border-radius:50%;">
+					{% else %}
+						<img src="{% static 'images/default-profile.png' %}" alt="Default Profile" style="width:50px; height:50px; border-radius:50%;">
+					{% endif %}
+				</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{% for group in user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td>{{ user.is_active|yesno:"Active,Inactive" }}</td>
+                <td>
+					<!-- Edit User Link -->
+					<a href="javascript:void(0);"
+						class="table-link table-link-teal"
+						onclick="openEditUserModal(this.dataset)"
+						data-user-id="{{ user.id }}"
+						data-username="{{ user.username }}"
+						data-first-name="{{ user.first_name }}"
+						data-last-name="{{ user.last_name }}"
+						data-email="{{ user.email }}"
+						data-roles="{{ user.groups.all|join:',' }}"
+					    data-current-business-id="{% if user.businesses.exists %}{{ user.businesses.first.id }}{% else %}{% endif %}"
+						data-is-active="{{ user.is_active|yesno:'true,false' }}">
+						Edit
+					</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+	<!-- Add New User Modal -->
+	<div id="create-user-modal" class="modal">
+		<form method="post" action="{% url 'create-user' %}" enctype="multipart/form-data"> <!-- Note enctype -->
+			{% csrf_token %}
+			<h2>Add New User</h2>
+
+			<!-- Render the form dynamically -->
+			{{ form.as_p }}
+
+			<div style="margin-top: 20px;">
+				<button type="submit" class="btn btn-primary">Create User</button>
+				<button type="button" class="btn btn-secondary" onclick="closeModal('create-user-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Edit User Modal -->
+	<div id="edit-user-modal" class="modal">
+		<form method="post" enctype="multipart/form-data" action="">
+			{% csrf_token %}
+			<input type="hidden" name="user_id" id="edit-user-id">
+			
+			<label for="edit-username">Username:</label>
+			<input type="text" name="username" id="edit-user-username" required>
+
+			<label for="edit-first-name">First Name:</label>
+			<input type="text" name="first_name" id="edit-first-name" required>
+
+			<label for="edit-last-name">Last Name:</label>
+			<input type="text" name="last_name" id="edit-last-name" required>
+
+			<label for="edit-email">Email:</label>
+			<input type="email" name="email" id="edit-email" readonly> <!-- Email is readonly -->
+			<br><br>
+			
+			<label for="edit-roles">Roles:</label>
+			<div id="edit-roles" class="checkbox-group">
+				{% for role in all_roles %}
+				<label>
+					<input type="checkbox" name="roles" value="{{ role.id }}"
+						   {% if role in user.groups.all %}checked{% endif %}>
+					{{ role.name }}
+				</label>
+				{% endfor %}
+			</div>
+			<br><br>
+			
+			<label for="edit-business">Transfer To:</label>
+			<select name="business_id" id="edit-business">
+				<option value="" disabled selected>Select Business</option>
+				{% for business in owned_businesses %}
+				<option value="{{ business.id }}">{{ business.name }}</option>
+				{% endfor %}
+			</select>
+
+			<label for="edit-is-active">Activate User:</label>
+			<input type="checkbox" name="is_active" id="edit-is-active">
+
+			<label for="edit-profile-picture">Profile Picture:</label>
+			<input type="file" name="profile_picture" id="edit-profile-picture" accept="image/*">
+
+			<div style="margin-top: 20px;">
+				<button type="submit" class="btn btn-primary">Save Changes</button>
+				<button type="button" class="btn btn-secondary" onclick="closeModal('edit-user-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Modal Overlay -->
+	<div id="modal-overlay" class="modal-overlay" onclick="closeAllModals()"></div>
+	
+	<script>
+	
+		function toggleModal(modalId) {
+			const modal = document.getElementById(modalId);
+			const overlay = document.querySelector('.modal-overlay');
+
+			if (modal.style.display === 'block') {
+				modal.style.display = 'none';
+				if (overlay) overlay.style.display = 'none';
+			} else {
+				modal.style.display = 'block';
+				if (overlay) overlay.style.display = 'block';
+			}
+		}
+
+		// Close the modal when clicking outside of it
+		window.onclick = function(event) {
+			const overlay = document.querySelector('.modal-overlay');
+			if (event.target === overlay) {
+				const modals = document.querySelectorAll('.modal');
+				modals.forEach(modal => modal.style.display = 'none');
+				overlay.style.display = 'none';
+			}
+		}
+	
+		function openModal(modalId, userId, username, action = null) {
+			const userIdInput = document.getElementById(modalId + '-user-id');
+			const usernameElement = document.getElementById(modalId + '-username');
+
+			if (userIdInput) userIdInput.value = userId;
+			if (usernameElement) usernameElement.innerText = username;
+
+			if (action) {
+				const actionElement = document.getElementById(modalId + '-action');
+				if (actionElement) actionElement.innerText = action === 'true' ? 'Deactivate' : 'Activate';
+			}
+
+			toggleModal(modalId);
+		}
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }	
+
+		function openEditUserModal(data) {
+			// Extract data from the button's dataset
+			const { userId, username, firstName, lastName, email, roles, currentBusinessId, isActive } = data;
+
+			// Debugging
+			console.log("Edit User Data:", { userId, username, firstName, lastName, email, roles, currentBusinessId, isActive });
+
+			// Access form fields
+			const userIdInput = document.getElementById('edit-user-id');
+			const usernameInput = document.getElementById('edit-user-username');
+			const firstNameInput = document.getElementById('edit-first-name');
+			const lastNameInput = document.getElementById('edit-last-name');
+			const emailInput = document.getElementById('edit-email');
+			const roleCheckboxes = document.getElementById('input[name="roles[]"]');
+			const businessSelect = document.getElementById('edit-business');
+			const isActiveCheckbox = document.getElementById('edit-is-active');
+			
+			// Populate modal fields
+			if (userIdInput) userIdInput.value = userId;
+			if (usernameInput) usernameInput.value = username;
+			if (firstNameInput) firstNameInput.value = firstName;
+			if (lastNameInput) lastNameInput.value = lastName;
+			if (emailInput) emailInput.value = email;
+
+			// Reset and populate role checkboxes
+			if (roleCheckboxes) {
+				const selectedRoles = roles ? roles.split(',') : []; // Convert roles string to array
+				roleCheckboxes.forEach(checkbox => {
+					checkbox.checked = selectedRoles.includes(checkbox.value); // Mark checkbox if role matches
+				});
+			}
+
+			// Populate business dropdown
+			if (businessSelect && currentBusinessId) {
+				Array.from(businessSelect.options).forEach(option => {
+					option.selected = option.value === currentBusinessId;
+				});
+			}
+
+			if (isActiveCheckbox) {
+				isActiveCheckbox.checked = isActive === 'true';
+			}
+			
+			// Set form action dynamically
+			const form = document.querySelector('#edit-user-modal form');
+			if (form) {
+				form.action = `/sales/edit-user/${userId}/`;
+			}
+
+			// Debug element references
+			console.log("Form Element References:", {
+				userIdInput,
+				usernameInput,
+				firstNameInput,
+				lastNameInput,
+				emailInput,
+				roleCheckboxes,
+			});
+
+			// Open the modal
+			toggleModal('edit-user-modal');
+		}
+
+		function closeAllModals() {
+			const modals = document.querySelectorAll('.modal');
+			const overlay = document.querySelector('.modal-overlay');
+
+			// Close all modals
+			modals.forEach(modal => {
+				modal.style.display = 'none';
+			});
+
+			// Hide the overlay
+			if (overlay) {
+				overlay.style.display = 'none';
+			}
+		}
+
+	</script>
+{% endblock %}

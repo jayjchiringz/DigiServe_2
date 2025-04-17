@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style2.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .registration-container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .form-section h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select, button, textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            font-size: 1.1em;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .centered {
+            text-align: center;
+        }
+
+        .centered a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .centered a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script>
+        function toggleBusinessForm() {
+            const businessDropdown = document.getElementById('business-dropdown');
+            const businessForm = document.getElementById('business-form');
+            if (businessDropdown.value === 'add_new') {
+                businessForm.style.display = 'block'; // Show the form
+            } else {
+                businessForm.style.display = 'none'; // Hide the form
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="registration-container">
+        <h2>Register for Digiserve</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Business Selection Section -->
+            <div class="form-section">
+                <h3>Select or Add Business</h3>
+                <label for="business-dropdown">Select Existing Business or Add New:</label>
+                <select id="business-dropdown" name="business" onchange="toggleBusinessForm()">
+                    <option value="">-- Select a Business --</option>
+                    {% for business in businesses %}
+                    <option value="{{ business.id }}">{{ business.name }}</option>
+                    {% endfor %}
+                    <option value="add_new">Add New Business</option>
+                </select>
+            </div>
+
+            <!-- Business Registration Section -->
+            <div id="business-form" class="form-section hidden">
+                <h3>New Business Information</h3>
+                {{ business_form.as_p }}
+            </div>
+
+            <!-- User Registration Section -->
+            <div class="form-section">
+                <h3>User Information</h3>
+                {{ user_form.as_p }}
+            </div>
+
+            <button type="submit">Register</button>
+        </form>
+
+        <p class="centered">
+            Already have an account? 
+            <a href="{% url 'login' %}">Login here</a>
+        </p>
+    </div>
+</body>
+</html>

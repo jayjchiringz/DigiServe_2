@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load currency_filters %}
+
+{% block header %}{{ selected_business.name }} - Stock Management {% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<ul class="messages">
+			{% for message in messages %}
+				<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	
+    <!-- Add Stock Button -->
+    <button class="btn btn-primary" onclick="toggleModal('add-stock-modal')">Add Stock</button>
+
+    <!-- Stock Table -->
+    <table>
+        <thead>
+            <tr>
+				<th>Image</th>
+                <th>Item Name</th>
+                <th>Quantity (Units)</th>
+                <th>Unit Selling Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+				<td>
+					{% if item.image %}
+					<img src="{{ item.image.url }}" alt="{{ item.name }} Image" style="height: 50px; width: auto;">
+					{% else %}
+					No Image
+					{% endif %}
+				</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.stock }}</td>
+				<td>{{ item.unit_selling_price|currency }}</td>             
+				<td>
+					<!-- Edit Stock Link -->
+					<a href="javascript:void(0);"
+					   class="table-link table-link-teal"
+					   onclick="openEditModal(
+						   '{{ item.id }}',
+						   '{{ item.name }}',
+						   '{{ item.package_type }}',
+						   '{{ item.units_per_package }}',
+						   '{{ item.stock }}', 
+						   '{{ item.current_price_per_package }}',
+						   '{{ item.unit_selling_price }}',
+						   '{% if item.image %}{{ item.image.url }}{% else %}No item image{% endif %}')">
+					   Edit Stock
+					</a>
+					
+					<!-- Delete Link -->
+					<a href="{% url 'delete-item' item.id %}" 
+					   class="table-link table-link-red"
+					   onclick="return confirm('Are you sure you want to delete this item?');">
+					   Delete
+					</a>
+				</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No stock available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+	<!-- Add Stock Modal -->
+	<div id="add-stock-modal" class="modal">
+		<form method="post" action="{% url 'add-stock' %}">
+			{% csrf_token %}
+			<h2>Add New Stock</h2>
+
+			<label for="item">Select Item:</label>
+			<select name="item" id="item" required onchange="updateItemDetails()">
+				<option value="">-- Select an item --</option>
+				{% for item in items %}
+				<option value="{{ item.id }}"
+						data-price="{{ item.current_price_per_package }}"
+						data-units="{{ item.units_per_package }}"
+						data-stock="{{ item.stock }}"
+						data-package-type="{{ item.package_type }}"
+						data-selling-price="{{ item.unit_selling_price }}">
+					{{ item.name }} ({{ item.package_type }})
+				</option>
+				{% endfor %}
+			</select>
+			<br>
+
+			<!-- Display Current Prices -->
+			<div id="item-details" style="margin-top: 10px; display: none;">
+				<p><strong>Current Package Type:</strong> <span id="current-package-type"></span></p>
+				<p><strong>Units Per Package:</strong> <span id="units-per-package"></span></p>
+				<p><strong>Current Stock:</strong> <span id="current-stock"></span></p>
+				<p><strong>Current Price per Package:</strong> <span id="current-price-per-package"></span></p>
+				<p><strong>Current unit Selling Price:</strong> <span id="current-selling-price"></span></p>
+			</div>
+
+			<label for="packages_added">Packages to Add:</label>
+			<input type="number" name="packages_added" id="packages_added" required min="1" step="1">
+			<br>
+					
+			<label for="updated_price_per_package">New Price Per Package:</label>
+			<input type="number" name="updated_price_per_package" id="updated_price_per_package" min="1" step="1">
+			<br>
+
+			<label for="unit_selling_price">New Unit Selling Price:</label>
+			<input type="text" name="unit_selling_price" id="unit_selling_price" min="1" step="1">
+			<br><br>
+			
+			<!-- Add Item Button -->
+			<label>Item not listed? Click the button below</label>
+			<div style="text-align: center; margin-top: 10px;">
+				<button type="button" class="btn btn-primary" onclick="toggleModal('add-item-modal', 'add-stock-modal')">
+					Add New Item
+				</button>
+			</div>
+
+			<div style="margin-top: 20px;">
+				<button type="submit" class="btn btn-primary">Save</button>
+				<button type="button" class="btn btn-danger" onclick="toggleModal('add-stock-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Add Item Modal -->
+	<div id="add-item-modal" class="modal">
+		<form method="post" action="{% url 'add-item' %}" enctype="multipart/form-data">
+			{% csrf_token %}
+			<h2>Add New Item</h2>
+			<label for="item_name">Item Name:</label>
+			<input 
+				type="text" 
+				name="item_name" 
+				id="item_name" 
+				required 
+				pattern="^[a-zA-Z0-9\-.,%&$#@()\[\]\s]+ - \d+(ml|g|L|kg|oz) - [a-zA-Z\s]+$" 
+				title="e.g. Balozi Lager - 500ml - glass bottle"
+				placeholder="item name - capacity - unit type" 
+			>
+			<br>
+			
+			<label for="package_type">Package Type:</label>
+			<select name="package_type" id="package_type">
+				<option value="crate">Crate</option>
+				<option value="box">Box</option>
+				<option value="bale">Bale</option>
+				<option value="tank">Tank</option>
+				<option value="bucket">Bucket</option>
+				<option value="jar">Jar</option>
+				<option value="" disabled>Custom</option>
+			</select>
+			<input 
+				type="text" 
+				name="custom_package_type" 
+				id="custom_package_type" 
+				placeholder="not listed? type a custom package type." 
+				oninput="document.getElementById('package_type').value = this.value"
+			>
+			<br>
+			<script>
+				// Ensure one of the fields is filled before form submission
+				document.querySelector("form").addEventListener("submit", function (e) {
+					const dropdown = document.getElementById("package_type").value.trim();
+					const customInput = document.getElementById("custom_package_type").value.trim();
+
+					if (!dropdown && !customInput) {
+						e.preventDefault(); // Prevent form submission
+						alert("Please select a package type from the dropdown or enter a custom package type.");
+					}
+				});
+			</script>
+
+			<label for="units_per_package">Units Per Package:</label>
+			<input type="number" name="units_per_package" id="units_per_package" required min="1">
+			<br>
+			
+			<label for="price_per_package">Price Per Package:</label>
+			<input type="number" name="current_price_per_package" id="current_price_per_package" required min="1" step="1">
+			<br>
+			
+			<label for="unit_selling_price">Unit Selling Price:</label>
+			<input type="number" name="unit_selling_price" id="unit_selling_price" required min="1" step="1">
+			<br>
+			
+			<label for="image">Item Image:</label>
+			<input type="file" name="image" id="image" accept="image/*">
+			<br>
+			
+			<div>
+				<button type="submit" class="btn btn-primary">Add Item</button>
+				<button type="button" class="btn btn-danger" onclick="toggleModal('add-item-modal', 'add-stock-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Edit Stock Modal -->
+	<div id="edit-stock-modal" class="modal">
+		<form method="post" action="{% url 'edit-stock' %}" enctype="multipart/form-data">
+			{% csrf_token %}
+			<h2>Edit Stock</h2>
+
+			<!-- Hidden Input for Item ID -->
+			<input type="hidden" name="item_id" id="stock-modal-edit-item-id">
+
+			<label for="stock-modal-edit-item-name">Item Name:</label>
+			<input type="text" name="item_name" id="stock-modal-edit-item-name" required>
+			<br>
+
+			<label for="stock-modal-edit-package-type">Package Type:</label>
+			<select name="package_type" id="stock-modal-edit-package-type">
+				<option value="crate">Crate</option>
+				<option value="box">Box</option>
+				<option value="bale">Bale</option>
+				<option value="tank">Tank</option>
+				<option value="bucket">Bucket</option>
+				<option value="jar">Jar</option>
+				<option value="" disabled>Custom</option>
+			</select>
+			<input 
+				type="text" 
+				name="custom_package_type" 
+				id="stock-modal-edit-custom-package-type" 
+				placeholder="Not listed? Type a custom package type."
+				oninput="handleCustomInputChange()"
+			>
+			<br>
+
+			<label for="stock-modal-units-per-package">Units per package:</label>
+			<input type="number" id="stock-modal-units-per-package" required min="1">
+
+			<label for="stock-modal-edit-stock-quantity">Current Quantity (Units):</label>
+			<input type="number" id="stock-modal-edit-stock-quantity" disabled>
+			<br>
+
+			<!--<label for="stock-modal-edit-new-stock">No. of units to Add:</label>-->
+			<input type="hidden" name="new_stock" id="stock-modal-edit-new-stock" required>
+			<br>
+
+			<label for="stock-modal-edit-price-per-package">Current Price Per Package:</label>
+			<input type="text" id="stock-modal-edit-price-per-package" disabled>
+			<br>
+
+			<label for="stock-modal-edit-new-price-per-package">New Price Per Package:</label>
+			<input type="number" name="new_price_per_package" id="stock-modal-edit-new-price-per-package" min="1" step="1">
+			<br>
+
+			<label for="stock-modal-edit-unit-selling-price">Current Unit Selling Price:</label>
+			<input type="text" id="stock-modal-edit-unit-selling-price" disabled>
+			<br>
+
+			<label for="stock-modal-edit-new-unit-selling-price">New Unit Selling Price:</label>
+			<input type="number" name="new_unit_selling_price" id="stock-modal-edit-new-unit-selling-price" min="1" step="1">
+			<br><br>
+
+			<label for="stock-edit-image">Item Image:</label>
+			<input type="file" name="image" id="stock-modal-edit-image" accept="image/*">
+			<br>
+
+			<!-- Add an img element for the preview -->
+			<img id="stock-modal-edit-image-preview" 
+				 src="" 
+				 alt="Stock Image Preview" 
+				 style="display: none; height: 100px; width: auto; margin-top: 10px;">
+			<br>
+
+			<div style="margin-top: 20px;">
+				<button type="submit" class="btn btn-primary">Save Changes</button>
+				<button type="button" class="btn btn-danger" onclick="toggleModal('edit-stock-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Edit Item Modal -->
+	<div id="edit-item-modal" class="modal">
+		<form method="post" action="{% url 'edit-item' %}" enctype="multipart/form-data">
+			{% csrf_token %}
+			<h2>Edit Item</h2>
+
+			<!-- Hidden Input for Item ID -->
+			<input type="hidden" name="item_id" id="item-modal-edit-item-id">
+
+			<label for="edit-item-name">Item Name:</label>
+			<input type="text" name="name" id="item-modal-edit-item-name" required>
+			<br>
+
+			<label for="edit-package-type">Package Type:</label>
+			<input type="text" name="package_type" id="item-modal-edit-package-type" required>
+			<br>
+
+			<label for="edit-units-per-package">Units Per Package:</label>
+			<input type="number" name="units_per_package" id="item-modal-edit-units-per-package" required>
+			<br>
+
+			<!--<label for="edit-price-per-package">Price Per Package:</label>-->
+			<input type="hidden" name="current_price_per_package" id="item-modal-edit-price-per-package" required>
+			<br>
+
+			<!--<label for="edit-unit-selling-price">Unit Selling Price:</label>-->
+			<input type="hidden" name="unit_selling_price" id="item-modal-edit-unit-selling-price" required>
+			<br>
+
+			<label for="edit-image">Item Image:</label>
+			<input type="file" name="image" id="item-modal-edit-image" accept="image/*">
+			<br>
+
+			<!-- Add an img element for the preview -->
+			<img id="item-modal-edit-image-preview" 
+				 src="" 
+				 alt="Item Image Preview" 
+				 style="display: none; height: 100px; width: auto; margin-top: 10px;">
+			<br>
+
+			<div style="margin-top: 20px;">
+				<button type="submit" class="btn btn-primary">Save Changes</button>
+				<button type="button" class="btn btn-danger" onclick="toggleModal('edit-item-modal')">Cancel</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Modal Overlay -->
+	<div id="modal-overlay" class="modal-overlay" onclick="closeAllModals()"></div>
+
+	<script>
+		function toggleModal(modalId, parentModalId = null) {
+			const modal = document.getElementById(modalId);
+			const overlay = document.getElementById('modal-overlay');
+
+			// If a parent modal is specified, hide it temporarily
+			if (parentModalId) {
+				const parentModal = document.getElementById(parentModalId);
+				if (modal.style.display === 'block') {
+					modal.style.display = 'none';
+					parentModal.style.display = 'block'; // Show parent modal
+				} else {
+					modal.style.display = 'block';
+					parentModal.style.display = 'none'; // Hide parent modal
+				}
+			} else {
+				// Toggle modal normally
+				if (modal.style.display === 'block') {
+					modal.style.display = 'none';
+					overlay.style.display = 'none';
+				} else {
+					closeAllModals(); // Close all other modals
+					modal.style.display = 'block';
+					overlay.style.display = 'block';
+				}
+			}
+		}
+
+		function closeAllModals() {
+			const modals = document.querySelectorAll('.modal');
+			const overlay = document.getElementById('modal-overlay');
+			modals.forEach(modal => (modal.style.display = 'none'));
+			overlay.style.display = 'none';
+		}
+
+		function updateItemDetails() {
+			const itemSelect = document.getElementById("item");
+			const selectedItem = itemSelect.options[itemSelect.selectedIndex];
+
+			// Get the data attributes
+			const pricePerPackage = selectedItem.getAttribute("data-price");
+			const sellingPrice = selectedItem.getAttribute("data-selling-price");
+			const packageType = selectedItem.getAttribute("data-package-type");
+			const unitsPerPackage = selectedItem.getAttribute("data-units");
+			const currentStock = selectedItem.getAttribute("data-stock");
+
+			// Log the data for debugging
+			console.log("Selected Item Details:");
+			console.log("Price Per Package:", pricePerPackage);
+			console.log("Selling Price:", sellingPrice);
+			console.log("Package Type:", packageType);
+			console.log("Units Per Package:", unitsPerPackage);
+			console.log("Current Stock:", currentStock);
+
+			// Update the details in the modal
+			const itemDetailsDiv = document.getElementById("item-details");
+			const currentPriceElement = document.getElementById("current-price-per-package");
+			const currentSellingPriceElement = document.getElementById("current-selling-price");
+			const currentPackageTypeElement = document.getElementById("current-package-type");
+			const unitsPerPackageElement = document.getElementById("units-per-package");
+			const currentStockElement = document.getElementById("current-stock");
+
+			// Check if all attributes are present
+			if (pricePerPackage && sellingPrice && packageType && unitsPerPackage && currentStock) {
+				// Format as currency
+				const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'Ksh' }); // Replace 'Ksh' with your currency code
+				const formattedPricePerPackage = formatter.format(parseFloat(pricePerPackage));
+				const formattedSellingPrice = formatter.format(parseFloat(sellingPrice));
+
+				// Update DOM elements
+				currentPriceElement.textContent = formattedPricePerPackage;
+				currentSellingPriceElement.textContent = formattedSellingPrice;
+				currentPackageTypeElement.textContent = packageType;
+				unitsPerPackageElement.textContent = unitsPerPackage;
+				currentStockElement.textContent = currentStock;
+
+				// Show the details section
+				itemDetailsDiv.style.display = "block";
+			} else {
+				console.warn("Incomplete item details. Hiding item details section.");
+				itemDetailsDiv.style.display = "none"; // Hide if no data available
+			}
+		}
+
+
+		function handlePackageTypeChange() {
+			const dropdown = document.getElementById("stock-modal-edit-package-type");
+			const customInput = document.getElementById("stock-modal-edit-custom-package-type");
+
+			// Enable custom input only if "Custom" is selected
+			if (dropdown.value === "") {
+				customInput.disabled = false; // Enable custom input
+				customInput.focus(); // Focus on the custom input field
+			} else {
+				customInput.disabled = false; // Keep custom input enabled
+				customInput.value = ""; // Clear custom input value
+			}
+		}
+
+		function handleCustomInputChange() {
+			const dropdown = document.getElementById("stock-modal-edit-package-type");
+			const customInput = document.getElementById("stock-modal-edit-custom-package-type");
+
+			// Clear dropdown selection if a custom value is being typed
+			if (customInput.value.trim()) {
+				dropdown.value = ""; // Clear dropdown selection
+			}
+		}
+
+		function openEditModal(id, name, packageType, unitsPerPackage, stock, pricePerPackage, sellingPrice, imageUrl) {
+			console.log("Populating Edit Stock Modal:", {
+				id,
+				name,
+				packageType,
+				unitsPerPackage,
+				stock,
+				pricePerPackage,
+				sellingPrice,
+				imageUrl,
+			});
+
+			// Populate the modal fields
+			document.getElementById("stock-modal-edit-item-id").value = id;
+			document.getElementById("stock-modal-edit-item-name").value = name;
+
+			const dropdown = document.getElementById("stock-modal-edit-package-type");
+			const customInput = document.getElementById("stock-modal-edit-custom-package-type");
+
+			// Check if the package type exists in the dropdown
+			let optionExists = false;
+			for (let option of dropdown.options) {
+				if (option.value === packageType) {
+					dropdown.value = packageType; // Select the matching option
+					optionExists = true;
+					break;
+				}
+			}
+
+			// Handle custom package type
+			if (!optionExists) {
+				dropdown.value = ""; // Set dropdown to "Custom"
+				customInput.value = packageType; // Populate custom input field
+				customInput.disabled = false; // Enable custom input
+			} else {
+				customInput.value = ""; // Clear custom input field if dropdown matches
+				customInput.disabled = true; // Disable custom input
+			}
+
+			document.getElementById("stock-modal-units-per-package").value = unitsPerPackage;
+			document.getElementById("stock-modal-edit-stock-quantity").value = stock;
+
+			// Format prices as currency
+			const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "Ksh" });
+			document.getElementById("stock-modal-edit-price-per-package").value = formatter.format(pricePerPackage);
+			document.getElementById("stock-modal-edit-unit-selling-price").value = formatter.format(sellingPrice);
+			
+			// Handle image preview
+			const imagePreview = document.getElementById('stock-modal-edit-image-preview');
+			if (imagePreview) {
+				if (imageUrl) {
+					imagePreview.src = imageUrl;
+					imagePreview.style.display = 'block';
+				} else {
+					imagePreview.src = '';
+					imagePreview.style.display = 'none';
+				}
+			}
+
+			// Reset new stock and price fields
+			document.getElementById("stock-modal-edit-new-stock").value = "";
+			document.getElementById("stock-modal-edit-new-price-per-package").value = "";
+			document.getElementById("stock-modal-edit-new-unit-selling-price").value = "";
+
+			// Show the modal
+			toggleModal("edit-stock-modal");
+		}
+
+		// Add event listeners for dropdown and custom input
+		document.getElementById("stock-modal-edit-package-type").addEventListener("change", handlePackageTypeChange);
+		document.getElementById("stock-modal-edit-custom-package-type").addEventListener("input", handleCustomInputChange);
+
+		// Validate form submission
+		document.querySelector("#edit-stock-modal form").addEventListener("submit", function (e) {
+			const dropdownValue = document.getElementById("stock-modal-edit-package-type").value.trim();
+			const customInputValue = document.getElementById("stock-modal-edit-custom-package-type").value.trim();
+
+			if (!dropdownValue && !customInputValue) {
+				e.preventDefault(); // Prevent form submission
+				alert("Please select a package type from the dropdown or enter a custom package type.");
+			}
+		});
+
+		
+		function openEditItemModal(id, name, packageType, unitsPerPackage, pricePerPackage, sellingPrice, imageUrl) {
+			console.log("Edit Item Modal Triggered:", {
+				id,
+				name,
+				packageType,
+				unitsPerPackage,
+				pricePerPackage,
+				sellingPrice,
+				imageUrl
+			});
+
+			// Populate the modal fields with fallback values
+			document.getElementById('item-modal-edit-item-id').value = id || '';
+			document.getElementById('item-modal-edit-item-name').value = name || '';
+			document.getElementById('item-modal-edit-package-type').value = packageType || '';
+			document.getElementById('item-modal-edit-units-per-package').value = unitsPerPackage || '';
+
+			// Format prices as currency
+			const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'Ksh' }); // Replace with your currency
+			document.getElementById('item-modal-edit-price-per-package').value = formatter.format(pricePerPackage);
+			document.getElementById('item-modal-edit-unit-selling-price').value = formatter.format(sellingPrice);
+
+			// Handle image preview
+			const imagePreview = document.getElementById('item-modal-edit-image-preview');
+			if (imagePreview) {
+				if (imageUrl) {
+					imagePreview.src = imageUrl;
+					imagePreview.style.display = 'block';
+				} else {
+					imagePreview.src = '';
+					imagePreview.style.display = 'none';
+				}
+			}
+
+			// Force values to update the modal's input fields
+			console.log("Enforcing field values...");
+			console.log("Name field value:", document.getElementById('item-modal-edit-item-name').value);
+			console.log("Price per package field value:", document.getElementById('item-modal-edit-price-per-package').value);
+			console.log("Unit selling price field value:", document.getElementById('item-modal-edit-unit-selling-price').value);
+
+			// Show the modal
+			toggleModal('edit-item-modal');
+		}				
+	</script>
+
+{% endblock %}

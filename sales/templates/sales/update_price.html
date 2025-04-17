@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Stock details</title>
+    <link rel="stylesheet" href="{% static 'css/style_2.css' %}">
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="{% url 'dashboard' %}">Home</a></li>
+            <li>
+                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+            </li>
+        </ul>
+    </nav>
+    <h2>Update Details for {{ item.name }}</h2>
+    
+		{% if messages %}
+			<ul class="messages">
+				{% for message in messages %}
+					<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+				{% endfor %}
+			</ul>
+		{% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="name">New Item Name:</label>
+        <input type="text" name="name" id="name" value="{{ item.name }}"><br><br>
+
+        <label for="type">New Package Type:</label>
+        <input type="text" name="type" id="type" value="{{ item.package_type }}"><br><br>
+
+        <label for="quantity">Quantity:</label>
+        <input type="number" name="quantity" id="quantity" value="{{ item.stock }}"><br><br>
+
+        <label for="package_price">New Price per package:</label>
+        <input type="number" name="package_price" id="package_price" value="{{ item.current_price_per_package }}"><br><br>
+
+        <label for="price">New Unit Selling Price:</label>
+        <input type="number" name="price" id="price" value="{{ item.unit_selling_price }}">
+
+        <button type="submit">Update</button>
+    </form>
+
+    <a href="{% url 'stock-list' %}">Back to Stock List</a>
+    <footer style="position: fixed; bottom: 10px; right: 10px; font-size: 12px; color: #555;">
+        Powered by <strong>DigiServe</strong>
+    </footer>
+</body>
+</html>
