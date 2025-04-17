@@ -27,7 +27,12 @@
             <tr>
                 <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
                 <td>{{ log.device.token|slice:":12" }}...</td>
-                <td>{{ log.device.user.username if log.device.user else "Unlinked" }}</td>
+                <td>{% if log.device.user %}
+                        {{ log.device.user.username }}
+                    {% else %}
+                        Unlinked
+                    {% endif %}
+                </td>
                 <td>{{ log.log_text }}</td>
             </tr>
             {% empty %}
