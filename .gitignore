@@ -4,11 +4,11 @@ __pycache__/
 *.pyc
 
 # Django Migrations (except __init__.py)
-**/migrations/
-!**/migrations/__init__.py
+#**/migrations/
+#!**/migrations/__init__.py
 
 # SQLite database
-db.sqlite3
+#db.sqlite3
 
 # Environment
 .env
