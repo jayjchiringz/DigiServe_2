@@ -80,7 +80,7 @@ def log_dashboard(request):
                     log_text=f"⚠️ Toggle failed — device not found: {token}"
                 )
 
-        return redirect('log_dashboard')  # ensure clean reload after POST
+        return redirect('guardian-log-dashboard')  # ensure clean reload after POST
 
     return render(request, 'guardian/dashboard.html', {
         'logs': logs,
