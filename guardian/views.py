@@ -1,12 +1,15 @@
-from .models import GuardianControl, GuardianLog, GuardianDevice
+from .models import GuardianApkUpdate, GuardianControl, GuardianLog, GuardianDevice, GuardianPatch
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
+from django.core.files.storage import FileSystemStorage
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import GuardianLogSerializer
+from django.db.models import OuterRef, Subquery
+import re
 
 def control_json(request):
     try:
@@ -51,29 +54,68 @@ def get_device_logs(request):
     serializer = GuardianLogSerializer(logs, many=True)
     return Response(serializer.data)
 
+def get_next_apk_version():
+    latest = GuardianApkUpdate.objects.order_by('-uploaded_at').first()
+    prefix = "v_1_1_"
+    if latest and latest.version.startswith(prefix):
+        try:
+            number = int(latest.version.replace(prefix, ""))
+            return f"{prefix}{number + 1}"
+        except ValueError:
+            return f"{prefix}1"
+    return f"{prefix}1"
+
 def log_dashboard(request):
     logs = GuardianLog.objects.select_related('device').order_by('-timestamp')[:200]
     devices = GuardianDevice.objects.all()
 
-    if request.method == 'POST':
-        submitted_token = request.POST.get("submit_token")
+    # Fetch latest patch per device
+    latest_patch_qs = GuardianPatch.objects.filter(
+        device=OuterRef('pk'), active=True
+    ).order_by('-uploaded_at')
 
+    devices = devices.annotate(
+        latest_patch_version=Subquery(latest_patch_qs.values('version')[:1]),
+        latest_patch_time=Subquery(latest_patch_qs.values('uploaded_at')[:1])
+    )
+
+    if 'upload_apk' in request.POST:
+        apk_file = request.FILES.get('apk_file')
+        version = request.POST.get('version')
+        changelog = request.POST.get('changelog', '')
+
+        if apk_file and version:
+            # Mark older APKs as inactive
+            GuardianApkUpdate.objects.all().update(active=False)
+
+            GuardianApkUpdate.objects.create(
+                apk_file=apk_file,
+                version=version,
+                changelog=changelog,
+                active=True
+            )
+
+            GuardianLog.objects.create(
+                device=None,
+                log_text=f"📦 New APK v{version} uploaded to dashboard"
+            )
+
+            return redirect('guardian-log-dashboard')
+
+        # ✅ Existing logic — apply override/simulation
+        submitted_token = request.POST.get("submit_token")
         if submitted_token:
             try:
                 device = GuardianDevice.objects.get(token=submitted_token)
-
-                # Extract POST states
                 override_enabled = f"override_{device.token}" in request.POST
                 forced_state = request.POST.get(f"force_{device.token}") == "on"
-                simulate_lock = f"simulate_{device.token}" in request.POST  # ✅ New flag
+                simulate_lock = f"simulate_{device.token}" in request.POST
 
-                # Save changes to device
                 device.override_enabled = override_enabled
                 device.override_value = forced_state
-                device.simulate_watu_lock = simulate_lock  # ✅ Save simulation intent
+                device.simulate_watu_lock = simulate_lock
                 device.save()
 
-                # Logging actions
                 GuardianLog.objects.create(
                     device=device,
                     log_text=f"🛰️ Remote override {'ENABLED' if override_enabled else 'DISABLED'} — State: {'ON' if forced_state else 'OFF'}"
@@ -135,3 +177,42 @@ def device_control_json(request, token):
         'status': 'on' if (control and control.enabled) else 'off',
         'simulate_watu': simulate_flag
     })
+
+def get_patch_url(request, token):
+    device = get_object_or_404(GuardianDevice, token=token)
+    patch = GuardianPatch.objects.filter(device=device, active=True).first()
+    if patch:
+        return JsonResponse({'patch_url': patch.dex_file.url})
+    return JsonResponse({'patch_url': None})
+
+@csrf_exempt
+def upload_patch_file(request):
+    if request.method == 'POST':
+        token = request.POST.get('device_token')
+        version = request.POST.get('version')
+        patch_file = request.FILES.get('dex_patch')
+
+        if not (token and version and patch_file):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+        device = get_object_or_404(GuardianDevice, token=token)
+
+        # Mark previous patches inactive
+        GuardianPatch.objects.filter(device=device).update(active=False)
+
+        new_patch = GuardianPatch.objects.create(
+            device=device,
+            version=version,
+            dex_file=patch_file,
+            active=True
+        )
+
+        GuardianLog.objects.create(
+            device=device,
+            log_text=f"✨ New patch uploaded: v{version}"
+        )
+
+        return JsonResponse({'message': f"Patch v{version} uploaded successfully"})
+
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+

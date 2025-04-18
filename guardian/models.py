@@ -26,3 +26,23 @@ class GuardianLog(models.Model):
 
     def __str__(self):
         return f"{self.device.token[:10]} - {self.timestamp.strftime('%H:%M:%S')}"
+
+class GuardianPatch(models.Model):
+    device = models.ForeignKey(GuardianDevice, on_delete=models.CASCADE, related_name='patches')
+    dex_file = models.FileField(upload_to='patches/')
+    version = models.CharField(max_length=32)
+    active = models.BooleanField(default=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Patch v{self.version} for {self.device.token[:10]}... ({'Active' if self.active else 'Inactive'})"
+
+class GuardianApkUpdate(models.Model):
+    apk_file = models.FileField(upload_to='apks/')
+    version = models.CharField(max_length=20)
+    changelog = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"APK v{self.version} - {'Active' if self.active else 'Inactive'}"

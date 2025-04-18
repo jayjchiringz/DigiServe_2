@@ -11,6 +11,21 @@
             padding: 20px;
         }
 
+        .patch-version-input {
+            margin-top: 5px;
+        }
+
+        .patch-form {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .patch-status {
+            font-size: 0.85em;
+            color: #c586c0;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -101,108 +116,150 @@
         .json-link a:hover {
             text-decoration: underline;
         }
+
+        .form-margin-top {
+            margin-top: 8px;
+            display:inline;
+        }
     </style>
 </head>
 <body>
 
-    <h2>🛠️ Device Control Panel</h2>
-    <form method="post">
-        {% csrf_token %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Device</th>
-                    <th>Status</th>
-                    <th>Manual Override</th>
-                    <th>Force State</th>
-                    <th>Sim Lock</th>
-                    <th>Apply</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for device in devices %}
-                    {% with device.control as ctrl %}
-                    <tr>
-                        <td>
-                            <span class="device-token">{{ device.token }}</span><br>
-                            <div class="json-link">
-                                🔗 <a href="https://digiserve25.pythonanywhere.com/control/{{ device.token }}.json" target="_blank" rel="noopener">Check JSON</a>
-                            </div>
-                        </td>
-                        <td>
-                            {% if device.override_enabled %}
-                                <span class="override-text">Override:</span>
-                                {% if device.override_value %}
-                                    <span class="status-enabled">ENABLED</span>
-                                {% else %}
-                                    <span class="status-disabled">DISABLED</span>
-                                {% endif %}
-                            {% elif ctrl %}
-                                {% if ctrl.enabled %}
-                                    <span class="status-enabled">ENABLED</span>
-                                {% else %}
-                                    <span class="status-disabled">DISABLED</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="status-disabled">DISABLED (no control)</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}>
-                                Enable Override
-                            </label>
-                        </td>
-                        <td>
-                            <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
-                            <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
-                        </td>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="simulate_{{ device.token }}" {% if device.simulate_watu_lock %}checked{% endif %}>
-                                Trigger Once
-                            </label>
-                        </td>                        
-                        <td>
-                            <input type="hidden" name="device_token" value="{{ device.token }}">
-                            <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
-                        </td>
-                    </tr>
-                    {% endwith %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </form>
-
-    <h2>📡 Guardian Activity Logs</h2>
+<h2>🛠️ Device Control Panel</h2>
+<form method="post" enctype="multipart/form-data" class="form-margin-top">
+    {% csrf_token %}
     <table>
         <thead>
             <tr>
-                <th>Time</th>
                 <th>Device</th>
-                <th>User</th>
-                <th>Log Message</th>
+                <th>Status</th>
+                <th>Manual Override</th>
+                <th>Force State</th>
+                <th>Sim Lock</th>
+                <th>Apply</th>
+                <th>Patch upgrade</th>
+                <th>Latest Patch</th>
+                <th>APK Upload</th>
             </tr>
         </thead>
         <tbody>
-            {% for log in logs %}
+            {% for device in devices %}
+                {% with device.control as ctrl %}
                 <tr>
-                    <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
-                    <td>{{ log.device.token|slice:":12" }}...</td>
                     <td>
-                        {% if log.device.user %}
-                            {{ log.device.user.username }}
+                        <span class="device-token">{{ device.token }}</span><br>
+                        <div class="json-link">
+                            🔗 <a href="https://digiserve25.pythonanywhere.com/control/{{ device.token }}.json" target="_blank" rel="noopener">Check JSON</a>
+                        </div>
+                    </td>
+                    <td>
+                        {% if device.override_enabled %}
+                            <span class="override-text">Override:</span>
+                            {% if device.override_value %}
+                                <span class="status-enabled">ENABLED</span>
+                            {% else %}
+                                <span class="status-disabled">DISABLED</span>
+                            {% endif %}
+                        {% elif ctrl %}
+                            {% if ctrl.enabled %}
+                                <span class="status-enabled">ENABLED</span>
+                            {% else %}
+                                <span class="status-disabled">DISABLED</span>
+                            {% endif %}
                         {% else %}
-                            Unlinked
+                            <span class="status-disabled">DISABLED (no control)</span>
                         {% endif %}
                     </td>
-                    <td>{{ log.log_text }}</td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}>
+                            Enable Override
+                        </label>
+                    </td>
+                    <td>
+                        <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
+                        <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
+                    </td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="simulate_{{ device.token }}" {% if device.simulate_watu_lock %}checked{% endif %}>
+                            Trigger Once
+                        </label>
+                    </td>
+                    <td>
+                        <input type="hidden" name="device_token" value="{{ device.token }}">
+                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                    </td>
+                    <td>
+                        <div class="patch-form">
+                            <input type="hidden" name="device_token" value="{{ device.token }}">
+                            <label for="patch_file_{{ device.token }}">Upload Patch:</label>
+                            <input type="file" id="patch_file_{{ device.token }}" name="dex_patch" accept=".dex" required>
+                            <input type="text" name="version" placeholder="Patch version (e.g. v1.0.2)" required class="patch-version-input">
+                            <button type="submit" formaction="{% url 'upload_patch_file' %}" formmethod="post">Send Patch</button>
+                        </div>
+                    </td>
+                    <td>
+                        {% if device.latest_patch_version %}
+                            <div><strong>v{{ device.latest_patch_version }}</strong></div>
+                            <div class="timestamp">{{ device.latest_patch_time|date:"Y-m-d H:i:s" }}</div>
+                        {% else %}
+                            <span class="status-disabled">No Patch</span>
+                        {% endif %}
+                    </td>
+                    {% if forloop.first %}
+                    <td rowspan="{{ devices|length }}">
+                        <div class="patch-form">
+                            <label>Upload APK (auto versioned)</label>
+                            <label for="apk_file">Upload APK File:</label>
+                            <input type="file" id="apk_file" name="apk_file" accept=".apk" required title="Select an APK file to upload">
+                            <textarea name="changelog" placeholder="Optional changelog..."></textarea>
+                            <button type="submit" name="upload_apk">Upload APK</button>
+                        </div>
+                        {% if latest_apk %}
+                        <div class="patch-status">
+                            Active APK: v{{ latest_apk.version }}<br>
+                            Uploaded: {{ latest_apk.uploaded_at|date:"Y-m-d H:i" }}<br>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endif %}
                 </tr>
-            {% empty %}
-                <tr><td colspan="4">No logs found.</td></tr>
+                {% endwith %}
             {% endfor %}
         </tbody>
     </table>
+</form>
+
+<h2>🛁 Guardian Activity Logs</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Device</th>
+            <th>User</th>
+            <th>Log Message</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+            <tr>
+                <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                <td>{{ log.device.token|slice":12" }}...</td>
+                <td>
+                    {% if log.device.user %}
+                        {{ log.device.user.username }}
+                    {% else %}
+                        Unlinked
+                    {% endif %}
+                </td>
+                <td>{{ log.log_text }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4">No logs found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 </body>
 </html>
