@@ -20,6 +20,7 @@
         th, td {
             padding: 12px;
             border-bottom: 1px solid #3c3c3c;
+            vertical-align: top;
         }
 
         th {
@@ -58,7 +59,7 @@
 
         input[type=radio], input[type=checkbox] {
             transform: scale(1.2);
-            margin-right: 8px;
+            margin-right: 6px;
         }
 
         button {
@@ -81,6 +82,25 @@
             padding-bottom: 6px;
             margin-top: 40px;
         }
+
+        .device-token {
+            color: #6ab0f3;
+            font-family: monospace;
+        }
+
+        .json-link {
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        .json-link a {
+            color: #4fc1ff;
+            text-decoration: none;
+        }
+
+        .json-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -99,42 +119,50 @@
                 </tr>
             </thead>
             <tbody>
-            {% for device in devices %}
-                {% with device.control as ctrl %}
-                <tr>
-                    <td>{{ device.token|slice:":12" }}...</td>
-                    <td>
-                        {% if device.override_enabled %}
-                            <span class="override-text">Override:</span>
-                            {% if device.override_value %}
-                                <span class="status-enabled">ENABLED</span>
+                {% for device in devices %}
+                    {% with device.control as ctrl %}
+                    <tr>
+                        <td>
+                            <span class="device-token">{{ device.token }}</span><br>
+                            <div class="json-link">
+                                🔗 <a href="https://digiserve25.pythonanywhere.com/control/{{ device.token }}.json" target="_blank" rel="noopener">Check JSON</a>
+                            </div>
+                        </td>
+                        <td>
+                            {% if device.override_enabled %}
+                                <span class="override-text">Override:</span>
+                                {% if device.override_value %}
+                                    <span class="status-enabled">ENABLED</span>
+                                {% else %}
+                                    <span class="status-disabled">DISABLED</span>
+                                {% endif %}
+                            {% elif ctrl %}
+                                {% if ctrl.enabled %}
+                                    <span class="status-enabled">ENABLED</span>
+                                {% else %}
+                                    <span class="status-disabled">DISABLED</span>
+                                {% endif %}
                             {% else %}
-                                <span class="status-disabled">DISABLED</span>
+                                <span class="status-disabled">DISABLED (no control)</span>
                             {% endif %}
-                        {% elif ctrl %}
-                            {% if ctrl.enabled %}
-                                <span class="status-enabled">ENABLED</span>
-                            {% else %}
-                                <span class="status-disabled">DISABLED</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="status-disabled">DISABLED (no control)</span>
-                        {% endif %}
-                    </td>                    
-                    <td>
-                        <label><input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}> Enable Override</label>
-                    </td>
-                    <td>
-                        <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label>
-                        <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
-                    </td>
-                    <td>
-                        <input type="hidden" name="device_token" value="{{ device.token }}">
-                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
-                    </td>
-                </tr>
-                {% endwith %}
-            {% endfor %}
+                        </td>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}>
+                                Enable Override
+                            </label>
+                        </td>
+                        <td>
+                            <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
+                            <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
+                        </td>
+                        <td>
+                            <input type="hidden" name="device_token" value="{{ device.token }}">
+                            <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                {% endfor %}
             </tbody>
         </table>
     </form>
@@ -171,4 +199,3 @@
 
 </body>
 </html>
-<!-- End of guardian/templates/guardian/dashboard.html -->
