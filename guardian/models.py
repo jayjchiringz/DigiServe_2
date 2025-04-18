@@ -15,6 +15,7 @@ class GuardianDevice(models.Model):
     override_enabled = models.BooleanField(default=False)  # ← Add this
     override_value = models.BooleanField(default=True)     # ← Store ON/OFF
 
+    simulate_watu_lock = models.BooleanField(default=False)  # 🔒 New remote simulation flag
     def __str__(self):
         return f"{self.user.username if self.user else 'Unlinked'} - {self.token[:10]}..."
 

@@ -62,17 +62,28 @@ def log_dashboard(request):
             try:
                 device = GuardianDevice.objects.get(token=submitted_token)
 
+                # Extract POST states
                 override_enabled = f"override_{device.token}" in request.POST
                 forced_state = request.POST.get(f"force_{device.token}") == "on"
+                simulate_lock = f"simulate_{device.token}" in request.POST  # ✅ New flag
 
+                # Save changes to device
                 device.override_enabled = override_enabled
                 device.override_value = forced_state
+                device.simulate_watu_lock = simulate_lock  # ✅ Save simulation intent
                 device.save()
 
+                # Logging actions
                 GuardianLog.objects.create(
                     device=device,
                     log_text=f"🛰️ Remote override {'ENABLED' if override_enabled else 'DISABLED'} — State: {'ON' if forced_state else 'OFF'}"
                 )
+
+                if simulate_lock:
+                    GuardianLog.objects.create(
+                        device=device,
+                        log_text=f"🧪 Simulated Watu lock manually triggered from dashboard"
+                    )
 
             except GuardianDevice.DoesNotExist:
                 GuardianLog.objects.create(
@@ -87,11 +98,21 @@ def log_dashboard(request):
         'devices': devices,
     })
 
-# views.py
 def device_control_json(request, token):
     device = get_object_or_404(GuardianDevice, token=token)
 
-    # 🔍 Check for override FIRST
+    simulate_flag = device.simulate_watu_lock  # capture current state before clearing
+
+    # Auto-reset after reading
+    if simulate_flag:
+        device.simulate_watu_lock = False
+        device.save()
+        GuardianLog.objects.create(
+            device=device,
+            log_text="🧪 simulate_watu_lock was triggered and has now been reset"
+        )
+
+    # Handle override
     if device.override_enabled:
         GuardianLog.objects.create(
             device=device,
@@ -99,13 +120,18 @@ def device_control_json(request, token):
         )
         return JsonResponse({
             'status': 'override',
-            'value': 'on' if device.override_value else 'off'
+            'value': 'on' if device.override_value else 'off',
+            'simulate_watu': simulate_flag
         })
 
+    # Default device control fallback
     control = GuardianControl.objects.filter(device=device).first()
     GuardianLog.objects.create(
         device=device,
         log_text=f"📶 Remote check: Guardian is {'ENABLED' if control and control.enabled else 'DISABLED'}"
     )
-    return JsonResponse({'status': 'on' if (control and control.enabled) else 'off'})
 
+    return JsonResponse({
+        'status': 'on' if (control and control.enabled) else 'off',
+        'simulate_watu': simulate_flag
+    })
