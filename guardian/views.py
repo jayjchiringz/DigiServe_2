@@ -90,9 +90,22 @@ def log_dashboard(request):
 # views.py
 def device_control_json(request, token):
     device = get_object_or_404(GuardianDevice, token=token)
-    
+
+    # 🔍 Check for override FIRST
     if device.override_enabled:
-        return JsonResponse({'status': 'override', 'value': 'on' if device.override_value else 'off'})
+        GuardianLog.objects.create(
+            device=device,
+            log_text=f"🛰️ Remote override ENABLED — State: {'ON' if device.override_value else 'OFF'}"
+        )
+        return JsonResponse({
+            'status': 'override',
+            'value': 'on' if device.override_value else 'off'
+        })
 
     control = GuardianControl.objects.filter(device=device).first()
+    GuardianLog.objects.create(
+        device=device,
+        log_text=f"📶 Remote check: Guardian is {'ENABLED' if control and control.enabled else 'DISABLED'}"
+    )
     return JsonResponse({'status': 'on' if (control and control.enabled) else 'off'})
+
