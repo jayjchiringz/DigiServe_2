@@ -106,17 +106,21 @@
                     <td>
                         {% if device.override_enabled %}
                             <span class="override-text">Override:</span>
-                            <span class="{% if device.override_value %}status-enabled{% else %}status-disabled{% endif %}">
-                                {{ "ENABLED" if device.override_value else "DISABLED" }}
-                            </span>
+                            {% if device.override_value %}
+                                <span class="status-enabled">ENABLED</span>
+                            {% else %}
+                                <span class="status-disabled">DISABLED</span>
+                            {% endif %}
                         {% elif ctrl %}
-                            <span class="{% if ctrl.enabled %}status-enabled{% else %}status-disabled{% endif %}">
-                                {{ "ENABLED" if ctrl.enabled else "DISABLED" }}
-                            </span>
+                            {% if ctrl.enabled %}
+                                <span class="status-enabled">ENABLED</span>
+                            {% else %}
+                                <span class="status-disabled">DISABLED</span>
+                            {% endif %}
                         {% else %}
                             <span class="status-disabled">DISABLED (no control)</span>
                         {% endif %}
-                    </td>
+                    </td>                    
                     <td>
                         <label><input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}> Enable Override</label>
                     </td>
