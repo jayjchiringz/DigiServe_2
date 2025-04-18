@@ -1,21 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Guardian Log Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border-bottom: 1px solid #ccc; }
-        th { background-color: #f0f0f0; }
-        .timestamp { font-size: 0.9em; color: #666; }
-        .status-disabled { color: red; }
-        .status-enabled { color: green; }
-        .override-label { color: orange; font-weight: bold; }
-        .override-text { color: orange; }
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        th {
+            background-color: #333;
+            color: #9cdcfe;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #2d2d2d;
+        }
+
+        tr:hover {
+            background-color: #3c3c3c;
+        }
+
+        .timestamp {
+            font-size: 0.85em;
+            color: #ce9178;
+        }
+
+        .status-disabled {
+            color: #f44747;
+            font-weight: bold;
+        }
+
+        .status-enabled {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .override-text {
+            color: #dcdcaa;
+            font-weight: bold;
+        }
+
+        input[type=radio], input[type=checkbox] {
+            transform: scale(1.2);
+            margin-right: 8px;
+        }
+
+        button {
+            background-color: #0e639c;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #1177bb;
+        }
+
+        h2 {
+            color: #9cdcfe;
+            border-bottom: 2px solid #3c3c3c;
+            padding-bottom: 6px;
+            margin-top: 40px;
+        }
     </style>
 </head>
 <body>
+
+    <h2>🛠️ Device Control Panel</h2>
     <form method="post">
         {% csrf_token %}
         <table>
@@ -30,22 +100,23 @@
             </thead>
             <tbody>
             {% for device in devices %}
+                {% with device.control as ctrl %}
                 <tr>
                     <td>{{ device.token|slice:":12" }}...</td>
                     <td>
-                            <strong class="override-text">Override:</strong>
-                            <strong style="color:orange;">Override:</strong>
-                            <span class="{{ 'status-enabled' if device.override_value else 'status-disabled' }}">
+                        {% if device.override_enabled %}
+                            <span class="override-text">Override:</span>
+                            <span class="{% if device.override_value %}status-enabled{% else %}status-disabled{% endif %}">
                                 {{ "ENABLED" if device.override_value else "DISABLED" }}
                             </span>
                         {% elif ctrl %}
-                            <span class="{{ 'status-enabled' if ctrl.enabled else 'status-disabled' }}">
+                            <span class="{% if ctrl.enabled %}status-enabled{% else %}status-disabled{% endif %}">
                                 {{ "ENABLED" if ctrl.enabled else "DISABLED" }}
                             </span>
                         {% else %}
-                            <span class="status-disabled">DISABLED (no ctrl)</span>
+                            <span class="status-disabled">DISABLED (no control)</span>
                         {% endif %}
-                    </td>                    
+                    </td>
                     <td>
                         <label><input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}> Enable Override</label>
                     </td>
@@ -58,10 +129,12 @@
                         <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
                     </td>
                 </tr>
+                {% endwith %}
             {% endfor %}
             </tbody>
         </table>
-    </form>    
+    </form>
+
     <h2>📡 Guardian Activity Logs</h2>
     <table>
         <thead>
@@ -74,21 +147,24 @@
         </thead>
         <tbody>
             {% for log in logs %}
-            <tr>
-                <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
-                <td>{{ log.device.token|slice:":12" }}...</td>
-                <td>{% if log.device.user %}
-                        {{ log.device.user.username }}
-                    {% else %}
-                        Unlinked
-                    {% endif %}
-                </td>
-                <td>{{ log.log_text }}</td>
-            </tr>
+                <tr>
+                    <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ log.device.token|slice:":12" }}...</td>
+                    <td>
+                        {% if log.device.user %}
+                            {{ log.device.user.username }}
+                        {% else %}
+                            Unlinked
+                        {% endif %}
+                    </td>
+                    <td>{{ log.log_text }}</td>
+                </tr>
             {% empty %}
-            <tr><td colspan="4">No logs found.</td></tr>
+                <tr><td colspan="4">No logs found.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+
 </body>
 </html>
+<!-- End of guardian/templates/guardian/dashboard.html -->
