@@ -245,7 +245,7 @@
         {% for log in logs %}
             <tr>
                 <td class="timestamp">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
-                <td>{{ log.device.token|slice"0:12" }}...</td>
+                <td>{{ log.device.token }}</td>
                 <td>
                     {% if log.device.user %}
                         {{ log.device.user.username }}
