@@ -11,24 +11,6 @@
             padding: 20px;
         }
 
-        .patch-version-input {
-            margin-top: 5px;
-        }
-
-        .patch-form {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-top: 30px;
-            border-top: 1px solid #3c3c3c;
-            padding-top: 20px;
-        }
-
-        .patch-status {
-            font-size: 0.85em;
-            color: #c586c0;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -53,46 +35,6 @@
 
         tr:hover {
             background-color: #3c3c3c;
-        }
-
-        .timestamp {
-            font-size: 0.85em;
-            color: #ce9178;
-        }
-
-        .status-disabled {
-            color: #f44747;
-            font-weight: bold;
-        }
-
-        .status-enabled {
-            color: #4ec9b0;
-            font-weight: bold;
-        }
-
-        .override-text {
-            color: #dcdcaa;
-            font-weight: bold;
-        }
-
-        input[type=radio], input[type=checkbox] {
-            transform: scale(1.2);
-            margin-right: 6px;
-        }
-
-        button {
-            background-color: #0e639c;
-            border: none;
-            color: white;
-            padding: 8px 14px;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: background-color 0.2s ease;
-        }
-
-        button:hover {
-            background-color: #1177bb;
         }
 
         h2 {
@@ -121,26 +63,32 @@
             text-decoration: underline;
         }
 
-        .form-margin-top {
-            margin-top: 8px;
-            display:inline;
-        }
-        .file-input {
-            color: #c8e1ff;
+        .timestamp {
+            font-size: 0.85em;
+            color: #ce9178;
         }
 
+        .status-disabled {
+            color: #f44747;
+            font-weight: bold;
+        }
+
+        .status-enabled {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .override-text {
+            color: #dcdcaa;
+            font-weight: bold;
+        }
+
+        .file-input,
         .changelog-textarea {
-            background: #1e1e1e;
-            color: #dcdcdc;
-            border: 1px solid #333;
-            padding: 4px;
+            width: 100%;
         }
 
-        /* File Input - Dark Mode Friendly */
-        .upload-label {
-            color: #9cdcfe;
-        }
-        input[type="file"] {
+        .file-input {
             background-color: #2d2d2d;
             color: #c8e1ff;
             border: 1px solid #444;
@@ -163,8 +111,7 @@
             background: #1177bb;
         }
 
-        /* Textarea - Changelog Styling */
-        textarea {
+        .changelog-textarea {
             background-color: #1e1e1e;
             color: #d4d4d4;
             border: 1px solid #3c3c3c;
@@ -174,36 +121,64 @@
             font-family: Consolas, monospace;
             font-size: 0.9em;
         }
+
+        input[type=radio], input[type=checkbox] {
+            transform: scale(1.2);
+            margin-right: 6px;
+        }
+
+        button {
+            background-color: #0e639c;
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #1177bb;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
     </style>
 </head>
 <body>
 
-<!-- EXISTING DEVICE TABLE (unchanged, except we REMOVE the upload column entirely) -->
 <h2>🛠️ Device Control Panel</h2>
-<form method="post" enctype="multipart/form-data" class="form-margin-top">
-    {% csrf_token %}
-    <table>
-        <thead>
+<table>
+    <thead>
+        <tr>
+            <th>Device</th>
+            <th>Status</th>
+            <th>Remote Override</th>
+            <th>Force State</th>
+            <th>APK / Dex</th>
+            <th>Apply</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for device in devices %}
+            {% with device.control as ctrl %}
             <tr>
-                <th>Device</th>
-                <th>Status</th>
-                <th>Remote Override</th>
-                <th>Force State</th>
-                <th>Apply</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in devices %}
-                {% with device.control as ctrl %}
-                <tr>
-                    <!-- Device Info -->
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="device_token" value="{{ device.token }}">
+
+                    <!-- Device -->
                     <td>
                         <span class="device-token">{{ device.token }}</span><br>
                         <div class="json-link">
                             🔗 <a href="https://digiserve25.pythonanywhere.com/control/{{ device.token }}.json" target="_blank" rel="noopener">Check JSON</a>
                         </div>
                     </td>
-                
+
                     <!-- Status -->
                     <td>
                         {% if device.override_enabled %}
@@ -223,42 +198,41 @@
                             <span class="status-disabled">DISABLED (no control)</span>
                         {% endif %}
                     </td>
-                
-                    <!-- Override Toggle -->
+
+                    <!-- Remote Override -->
                     <td>
                         <label>
                             <input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}>
                             Enable Override
                         </label>
                     </td>
-                
+
                     <!-- Force -->
                     <td>
                         <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
                         <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
                     </td>
-                
-                    <!-- Upload & Apply -->
+
+                    <!-- APK or Dex -->
                     <td>
-                        <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px; background: #2d2d2d; padding: 10px; border-radius: 6px;">
-                            {% csrf_token %}                    
-                            <!-- File Upload -->
-                            <label for="update_file_{{ device.token }}" class="upload-label">Upload File (APK or Dex)</label>
-                            <input type="file" id="update_file_{{ device.token }}" name="apk_file" accept=".apk,.dex" class="file-input">
-                    
-                            <!-- Changelog -->
+                        <div class="form-row">
+                            <label for="apk_file_{{ device.token }}" class="upload-label">Upload File (APK or Dex)</label>
+                            <input type="file" id="apk_file_{{ device.token }}" name="apk_file" accept=".apk,.dex" class="file-input">
                             <textarea name="changelog" placeholder="Optional changelog..." rows="2" class="changelog-textarea"></textarea>
-                    
-                            <!-- Apply Button -->
-                            <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
-                        </form>
-                    </td>                    
-                </tr>                
-                {% endwith %}
-            {% endfor %}
-        </tbody>
-    </table>
-</form>
+                        </div>
+                    </td>
+
+                    <!-- Apply -->
+                    <td>
+                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                    </td>
+                </form>
+            </tr>
+            {% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+
 <h2>🛁 Guardian Activity Logs</h2>
 <table>
     <thead>
@@ -291,3 +265,5 @@
 
 </body>
 </html>
+<!-- End of guardian/templates/guardian/dashboard.html -->
+<!-- This template is used to display the device control panel and activity logs for the Guardian application. It includes a table for device management and another for log entries. The design is styled to be dark-themed, with clear distinctions between different sections and elements. The form allows users to upload files, toggle settings, and view JSON links for each device. The logs section provides a history of actions taken on devices, including timestamps and user information. -->
