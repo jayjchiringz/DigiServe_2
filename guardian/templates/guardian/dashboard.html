@@ -19,6 +19,9 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            margin-top: 30px;
+            border-top: 1px solid #3c3c3c;
+            padding-top: 20px;
         }
 
         .patch-status {
@@ -125,6 +128,7 @@
 </head>
 <body>
 
+<!-- EXISTING DEVICE TABLE (unchanged, except we REMOVE the upload column entirely) -->
 <h2>🛠️ Device Control Panel</h2>
 <form method="post" enctype="multipart/form-data" class="form-margin-top">
     {% csrf_token %}
@@ -135,7 +139,6 @@
                 <th>Status</th>
                 <th>Remote Override</th>
                 <th>Force State</th>
-                <th>APK Upload</th>
                 <th>Apply</th>
             </tr>
         </thead>
@@ -177,39 +180,6 @@
                         <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
                         <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
                     </td>
-                    {% if forloop.first %}
-                    <td rowspan="{{ devices|length }}">
-                        <div class="patch-form">
-                            <label>📦 Upload APK + Optional Dex Patch</label>
-                    
-                            <!-- APK Upload -->
-                            <label for="apk_file">APK File:</label>
-                            <input type="file" id="apk_file" name="apk_file" accept=".apk" title="Select an APK file">
-                    
-                            <!-- DEX Upload -->
-                            <label for="dex_file">DEX Patch (optional):</label>
-                            <input type="file" id="dex_file" name="dex_file" accept=".dex" title="Optional .dex patch file to override logic">
-                    
-                            <!-- Changelog -->
-                            <textarea name="changelog" placeholder="Optional changelog..."></textarea>
-                    
-                            <!-- Submit -->
-                            <button type="submit" name="upload_apk">Upload Files</button>
-                        </div>
-                    
-                        {% if latest_apk %}
-                        <div class="patch-status">
-                            <strong>Active APK:</strong> v{{ latest_apk.version }}<br>
-                            <strong>Uploaded:</strong> {{ latest_apk.uploaded_at|date:"Y-m-d H:i" }}<br>
-                            {% if latest_apk.dex_patch %}
-                            <strong>Patch:</strong> ✔️ {{ latest_apk.dex_patch.name }}
-                            {% else %}
-                            <strong>Patch:</strong> ❌ None
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                    </td>
-                    {% endif %}                    
                     <td>
                         <input type="hidden" name="device_token" value="{{ device.token }}">
                         <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
@@ -221,6 +191,34 @@
     </table>
 </form>
 
+<!-- ✅ NEW SECTION: APK Upload -->
+<h2>📤 APK Upload</h2>
+<form method="post" enctype="multipart/form-data" class="patch-form">
+    {% csrf_token %}
+    <label>📦 Upload APK + Optional Dex Patch</label>
+
+    <label for="apk_file">APK File:</label>
+    <input type="file" id="apk_file" name="apk_file" accept=".apk">
+
+    <label for="dex_file">DEX Patch (optional):</label>
+    <input type="file" id="dex_file" name="dex_file" accept=".dex">
+
+    <textarea name="changelog" placeholder="Optional changelog..."></textarea>
+
+    <button type="submit" name="upload_apk">Upload Files</button>
+
+    {% if latest_apk %}
+    <div class="patch-status">
+        <strong>Active APK:</strong> v{{ latest_apk.version }}<br>
+        <strong>Uploaded:</strong> {{ latest_apk.uploaded_at|date:"Y-m-d H:i" }}<br>
+        {% if latest_apk.dex_patch %}
+        <strong>Patch:</strong> ✔️ {{ latest_apk.dex_patch.name }}
+        {% else %}
+        <strong>Patch:</strong> ❌ None
+        {% endif %}
+    </div>
+    {% endif %}
+</form>
 <h2>🛁 Guardian Activity Logs</h2>
 <table>
     <thead>
