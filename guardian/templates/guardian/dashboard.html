@@ -137,6 +137,9 @@
         }
 
         /* File Input - Dark Mode Friendly */
+        .upload-label {
+            color: #9cdcfe;
+        }
         input[type="file"] {
             background-color: #2d2d2d;
             color: #c8e1ff;
@@ -237,25 +240,19 @@
                 
                     <!-- Upload & Apply -->
                     <td>
-                        <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 6px;">
-                            {% csrf_token %}
-                            <label for="apk_file_{{ device.token }}" title="Upload APK file">APK File:</label>
-                            <input type="file" id="apk_file_{{ device.token }}" name="apk_file" accept=".apk" class="file-input">
-                
-                            <!-- APK -->
-                            <label for="apk_file_upload" title="Upload APK file">APK File:</label>
-                            <input type="file" id="apk_file_upload" name="apk_file" accept=".apk" class="file-input">
-
-                            <!-- Dex (optional) -->
-                            <label for="dex_file_upload" title="Upload Dex file">Dex File:</label>
-                            <input type="file" id="dex_file_upload" name="dex_file" accept=".dex" class="file-input">
-                
+                        <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px; background: #2d2d2d; padding: 10px; border-radius: 6px;">
+                            {% csrf_token %}                    
+                            <!-- File Upload -->
+                            <label for="update_file_{{ device.token }}" class="upload-label">Upload File (APK or Dex)</label>
+                            <input type="file" id="update_file_{{ device.token }}" name="apk_file" accept=".apk,.dex" class="file-input">
+                    
                             <!-- Changelog -->
-                            <textarea name="changelog" placeholder="Optional changelog..." rows="2" class=" changelog-textarea"></textarea>
-                
+                            <textarea name="changelog" placeholder="Optional changelog..." rows="2" class="changelog-textarea"></textarea>
+                    
+                            <!-- Apply Button -->
                             <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
                         </form>
-                    </td>
+                    </td>                    
                 </tr>                
                 {% endwith %}
             {% endfor %}
