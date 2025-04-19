@@ -147,6 +147,18 @@
             flex-direction: column;
             gap: 6px;
         }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -216,7 +228,7 @@
                     <!-- APK or Dex -->
                     <td>
                         <div class="form-row">
-                            <label for="apk_file_{{ device.token }}" class="upload-label">Upload File (APK or Dex)</label>
+                            <label for="apk_file_{{ device.token }}" class="upload-label sr-only">Upload File (APK or Dex)</label>
                             <input type="file" id="apk_file_{{ device.token }}" name="apk_file" accept=".apk,.dex" class="file-input">
                             <textarea name="changelog" placeholder="Optional changelog..." rows="2" class="changelog-textarea"></textarea>
                         </div>
