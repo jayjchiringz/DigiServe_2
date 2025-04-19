@@ -105,27 +105,53 @@ def log_dashboard(request):
                 )
 
         # 2. Optional APK upload
-        if 'upload_apk' in request.POST:
-            apk_file = request.FILES.get('apk_file')
-            dex_file = request.FILES.get('dex_file')
-            changelog = request.POST.get('changelog', '')
-            version = request.POST.get('version') or get_next_apk_version()
+        if request.method == 'POST':
+            submitted_token = request.POST.get("submit_token")
 
-            if apk_file:
-                GuardianApkUpdate.objects.all().update(active=False)
-                GuardianApkUpdate.objects.create(
-                    apk_file=apk_file,
-                    dex_patch=dex_file,
-                    version=version,
-                    changelog=changelog,
-                    active=True
-                )
-                GuardianLog.objects.create(
-                    device=None,
-                    log_text=f"📦 New APK v{version} uploaded to dashboard"
-                )
+            if submitted_token:
+                try:
+                    device = GuardianDevice.objects.get(token=submitted_token)
+                    
+                    # Handle override
+                    override_enabled = f"override_{device.token}" in request.POST
+                    forced_state = request.POST.get(f"force_{device.token}") == "on"
 
-        return redirect('guardian-log-dashboard')
+                    device.override_enabled = override_enabled
+                    device.override_value = forced_state
+                    device.save()
+
+                    GuardianLog.objects.create(
+                        device=device,
+                        log_text=f"🛰️ Remote override {'ENABLED' if override_enabled else 'DISABLED'} — State: {'ON' if forced_state else 'OFF'}"
+                    )
+
+                    # ✅ Handle APK upload with override
+                    apk_file = request.FILES.get('apk_file')
+                    dex_file = request.FILES.get('dex_file')
+                    changelog = request.POST.get('changelog', '')
+                    version = get_next_apk_version()
+
+                    if apk_file:
+                        GuardianApkUpdate.objects.all().update(active=False)
+                        GuardianApkUpdate.objects.create(
+                            apk_file=apk_file,
+                            dex_patch=dex_file,
+                            version=version,
+                            changelog=changelog,
+                            active=True
+                        )
+                        GuardianLog.objects.create(
+                            device=device,
+                            log_text=f"📦 APK v{version} uploaded via dashboard and tied to device"
+                        )
+
+                except GuardianDevice.DoesNotExist:
+                    GuardianLog.objects.create(
+                        device=None,
+                        log_text=f"⚠️ Override or upload failed — device not found: {submitted_token}"
+                    )
+
+            return redirect('guardian-log-dashboard')
 
     return render(request, 'guardian/dashboard.html', {
         'logs': logs,

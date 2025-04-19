@@ -84,10 +84,11 @@
             background-color: #0e639c;
             border: none;
             color: white;
-            padding: 6px 14px;
+            padding: 8px 14px;
             font-size: 14px;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
         }
 
         button:hover {
@@ -133,6 +134,42 @@
             color: #dcdcdc;
             border: 1px solid #333;
             padding: 4px;
+        }
+
+        /* File Input - Dark Mode Friendly */
+        input[type="file"] {
+            background-color: #2d2d2d;
+            color: #c8e1ff;
+            border: 1px solid #444;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: #1177bb;
+        }
+
+        /* Textarea - Changelog Styling */
+        textarea {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 6px;
+            resize: vertical;
+            font-family: Consolas, monospace;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -206,11 +243,9 @@
                             <input type="file" id="apk_file_{{ device.token }}" name="apk_file" accept=".apk" class="file-input">
                 
                             <!-- APK -->
-                            <label for="dex_file_upload" title="Upload Dex file">Dex File:</label>
-                            <input type="file" id="dex_file_upload" name="dex_file" accept=".dex" class="file-input">
                             <label for="apk_file_upload" title="Upload APK file">APK File:</label>
                             <input type="file" id="apk_file_upload" name="apk_file" accept=".apk" class="file-input">
-                            <textarea name="changelog" placeholder="Optional changelog..." rows="2" class="changelog-textarea"></textarea>
+
                             <!-- Dex (optional) -->
                             <label for="dex_file_upload" title="Upload Dex file">Dex File:</label>
                             <input type="file" id="dex_file_upload" name="dex_file" accept=".dex" class="file-input">
@@ -226,35 +261,6 @@
             {% endfor %}
         </tbody>
     </table>
-</form>
-
-<!-- ✅ NEW SECTION: APK Upload -->
-<h2>📤 APK Upload</h2>
-<form method="post" enctype="multipart/form-data" class="patch-form">
-    {% csrf_token %}
-    <label>📦 Upload APK + Optional Dex Patch</label>
-
-    <label for="apk_file">APK File:</label>
-    <input type="file" id="apk_file" name="apk_file" accept=".apk">
-
-    <label for="dex_file">DEX Patch (optional):</label>
-    <input type="file" id="dex_file" name="dex_file" accept=".dex">
-
-    <textarea name="changelog" placeholder="Optional changelog..."></textarea>
-
-    <button type="submit" name="upload_apk">Upload Files</button>
-
-    {% if latest_apk %}
-    <div class="patch-status">
-        <strong>Active APK:</strong> v{{ latest_apk.version }}<br>
-        <strong>Uploaded:</strong> {{ latest_apk.uploaded_at|date:"Y-m-d H:i" }}<br>
-        {% if latest_apk.dex_patch %}
-        <strong>Patch:</strong> ✔️ {{ latest_apk.dex_patch.name }}
-        {% else %}
-        <strong>Patch:</strong> ❌ None
-        {% endif %}
-    </div>
-    {% endif %}
 </form>
 <h2>🛁 Guardian Activity Logs</h2>
 <table>
