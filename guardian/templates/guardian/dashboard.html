@@ -133,7 +133,7 @@
             <tr>
                 <th>Device</th>
                 <th>Status</th>
-                <th>Manual Override</th>
+                <th>Remote Override</th>
                 <th>Force State</th>
                 <!--<th>Sim Lock</th>-->
                 <!--<th>Patch upgrade</th>-->
@@ -201,7 +201,7 @@
                             <button type="submit" formaction="{% url 'upload_patch_file' %}" formmethod="post">Send Patch</button>
                         </div>
                     </td>
-                -->
+                
                     <td>
                         {% if device.latest_patch_version %}
                             <div><strong>v{{ device.latest_patch_version }}</strong></div>
@@ -210,6 +210,7 @@
                             <span class="status-disabled">No Patch</span>
                         {% endif %}
                     </td>
+                    -->
                     {% if forloop.first %}
                     <td rowspan="{{ devices|length }}">
                         <div class="patch-form">
@@ -227,6 +228,10 @@
                         {% endif %}
                     </td>
                     {% endif %}
+                    <td>
+                        <input type="hidden" name="device_token" value="{{ device.token }}">
+                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                    </td>
                 </tr>
                 {% endwith %}
             {% endfor %}
