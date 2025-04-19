@@ -124,6 +124,16 @@
             margin-top: 8px;
             display:inline;
         }
+        .file-input {
+            color: #c8e1ff;
+        }
+
+        .changelog-textarea {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border: 1px solid #333;
+            padding: 4px;
+        }
     </style>
 </head>
 <body>
@@ -146,12 +156,15 @@
             {% for device in devices %}
                 {% with device.control as ctrl %}
                 <tr>
+                    <!-- Device Info -->
                     <td>
                         <span class="device-token">{{ device.token }}</span><br>
                         <div class="json-link">
                             🔗 <a href="https://digiserve25.pythonanywhere.com/control/{{ device.token }}.json" target="_blank" rel="noopener">Check JSON</a>
                         </div>
                     </td>
+                
+                    <!-- Status -->
                     <td>
                         {% if device.override_enabled %}
                             <span class="override-text">Override:</span>
@@ -170,21 +183,45 @@
                             <span class="status-disabled">DISABLED (no control)</span>
                         {% endif %}
                     </td>
+                
+                    <!-- Override Toggle -->
                     <td>
                         <label>
                             <input type="checkbox" name="override_{{ device.token }}" {% if device.override_enabled %}checked{% endif %}>
                             Enable Override
                         </label>
                     </td>
+                
+                    <!-- Force -->
                     <td>
                         <label><input type="radio" name="force_{{ device.token }}" value="on" {% if device.override_value %}checked{% endif %}> ON</label><br>
                         <label><input type="radio" name="force_{{ device.token }}" value="off" {% if not device.override_value %}checked{% endif %}> OFF</label>
                     </td>
+                
+                    <!-- Upload & Apply -->
                     <td>
-                        <input type="hidden" name="device_token" value="{{ device.token }}">
-                        <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                        <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 6px;">
+                            {% csrf_token %}
+                            <label for="apk_file_{{ device.token }}" title="Upload APK file">APK File:</label>
+                            <input type="file" id="apk_file_{{ device.token }}" name="apk_file" accept=".apk" class="file-input">
+                
+                            <!-- APK -->
+                            <label for="dex_file_upload" title="Upload Dex file">Dex File:</label>
+                            <input type="file" id="dex_file_upload" name="dex_file" accept=".dex" class="file-input">
+                            <label for="apk_file_upload" title="Upload APK file">APK File:</label>
+                            <input type="file" id="apk_file_upload" name="apk_file" accept=".apk" class="file-input">
+                            <textarea name="changelog" placeholder="Optional changelog..." rows="2" class="changelog-textarea"></textarea>
+                            <!-- Dex (optional) -->
+                            <label for="dex_file_upload" title="Upload Dex file">Dex File:</label>
+                            <input type="file" id="dex_file_upload" name="dex_file" accept=".dex" class="file-input">
+                
+                            <!-- Changelog -->
+                            <textarea name="changelog" placeholder="Optional changelog..." rows="2" class=" changelog-textarea"></textarea>
+                
+                            <button type="submit" name="submit_token" value="{{ device.token }}">Apply</button>
+                        </form>
                     </td>
-                </tr>
+                </tr>                
                 {% endwith %}
             {% endfor %}
         </tbody>
