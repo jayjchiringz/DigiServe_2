@@ -1,3 +1,4 @@
+from requests import request
 from .models import GuardianApkUpdate, GuardianControl, GuardianLog, GuardianDevice, GuardianPatch
 
 from django.shortcuts import get_object_or_404, render, redirect
@@ -106,6 +107,7 @@ def log_dashboard(request):
         # 2. Optional APK upload
         if 'upload_apk' in request.POST:
             apk_file = request.FILES.get('apk_file')
+            dex_file = request.FILES.get('dex_file')
             changelog = request.POST.get('changelog', '')
             version = request.POST.get('version') or get_next_apk_version()
 
@@ -113,6 +115,7 @@ def log_dashboard(request):
                 GuardianApkUpdate.objects.all().update(active=False)
                 GuardianApkUpdate.objects.create(
                     apk_file=apk_file,
+                    dex_patch=dex_file,
                     version=version,
                     changelog=changelog,
                     active=True
@@ -132,10 +135,9 @@ def log_dashboard(request):
 
 def device_control_json(request, token):
     device = get_object_or_404(GuardianDevice, token=token)
+    simulate_flag = device.simulate_watu_lock
 
-    simulate_flag = device.simulate_watu_lock  # capture current state before clearing
-
-    # Auto-reset after reading
+    # Reset simulate flag after read
     if simulate_flag:
         device.simulate_watu_lock = False
         device.save()
@@ -144,19 +146,26 @@ def device_control_json(request, token):
             log_text="🧪 simulate_watu_lock was triggered and has now been reset"
         )
 
-    # Handle override
+    # Get active APK (if any)
+    active_apk = GuardianApkUpdate.objects.filter(active=True).first()
+    apk_url = active_apk.apk_file.url if active_apk else None
+    dex_url = active_apk.dex_patch.url if active_apk and active_apk.dex_patch else None
+
+    # Determine control state
     if device.override_enabled:
         GuardianLog.objects.create(
             device=device,
             log_text=f"🛰️ Remote override ENABLED — State: {'ON' if device.override_value else 'OFF'}"
         )
         return JsonResponse({
-            'status': 'override',
-            'value': 'on' if device.override_value else 'off',
-            'simulate_watu': simulate_flag
+            "status": "override",
+            "value": "on" if device.override_value else "off",
+            "simulate_watu": simulate_flag,
+            "apk_url": apk_url,
+            "dex_url": dex_url
         })
 
-    # Default device control fallback
+    # Fallback to default control
     control = GuardianControl.objects.filter(device=device).first()
     GuardianLog.objects.create(
         device=device,
@@ -164,8 +173,10 @@ def device_control_json(request, token):
     )
 
     return JsonResponse({
-        'status': 'on' if (control and control.enabled) else 'off',
-        'simulate_watu': simulate_flag
+        "status": "on" if (control and control.enabled) else "off",
+        "simulate_watu": simulate_flag,
+        "apk_url": apk_url,
+        "dex_url": dex_url,
     })
 
 def get_patch_url(request, token):

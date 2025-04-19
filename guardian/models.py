@@ -44,5 +44,8 @@ class GuardianApkUpdate(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
 
+    # 🔁 New DEX support
+    dex_patch = models.FileField(upload_to="patches/", null=True, blank=True)
+
     def __str__(self):
         return f"APK v{self.version} - {'Active' if self.active else 'Inactive'}"
